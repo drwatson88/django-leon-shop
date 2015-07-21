@@ -9,6 +9,12 @@ from django.contrib.contenttypes import generic
 from pytils.translit import slugify
 
 
+class Maker(models.Model):
+
+    name = models.CharField(u'Поставщик', max_length=255)
+    code = models.IntegerField(u"Код")
+
+
 class Category(MP_Node):
 
     def path_for_object(instance, filename):
@@ -28,6 +34,7 @@ class CategoryXML(MP_Node):
     name = models.CharField(u'Заголовок', max_length=255)
     page_id = models.CharField(u'id категории в системе поставщика', blank=True, null=True, max_length=100)
     uri = models.CharField(u'Имя ссылки', max_length=255)
+    maker = models.ForeignKey(Maker)
 
 
 class Group(models.Model):
@@ -47,29 +54,23 @@ class PrintType(models.Model):
     description = models.CharField(u'Название вида нанесения', max_length=255)
 
 
-class FilterType(models.Model):
-
-    filter_type_id = models.CharField(u'id типа фильтра в системе поставщика', max_length=50)
-    filter_type_name = models.CharField(u'Название типа фильтра', max_length=255)
-
-
-class Filter(models.Model):
-
-    filter_id = models.CharField(u'id фильтра в системе поставщика', max_length=50)
-    filter_name = models.CharField(u'Название фильтра', max_length=50)
-    filter_type = models.ForeignKey(FilterType)
-
-
-class Maker(models.Model):
-
-    title = models.CharField(u'Поставщик', max_length=255)
-    code = models.CharField(u"Код", max_length=60)
+# class FilterType(models.Model):
+#
+#     filter_type_id = models.CharField(u'id типа фильтра в системе поставщика', max_length=50)
+#     filter_type_name = models.CharField(u'Название типа фильтра', max_length=255)
+#
+#
+# class Filter(models.Model):
+#
+#     filter_id = models.CharField(u'id фильтра в системе поставщика', max_length=50)
+#     filter_name = models.CharField(u'Название фильтра', max_length=50)
+#     filter_type = models.ForeignKey(FilterType)
 
 
 class Stock(models.Model):
 
-    product_id = models.CharField(u'id товара в системе поставщика', max_length=50)
-    code = models.CharField(u'Артикул', max_length=50)
+    # product_id = models.CharField(u'id товара в системе поставщика', max_length=50)
+    # code = models.CharField(u'Артикул', max_length=50)
     amount = models.IntegerField(u'Всего на складе')
 
     content_type = models.ForeignKey(ContentType)
@@ -99,9 +100,11 @@ class Tovar(models.Model):
     brand = models.CharField(u'Бренд', max_length=50)
     weight = models.DecimalField(u'Вес',  decimal_places=2, max_digits=10)
     price = models.DecimalField(u'Цена',  decimal_places=2, max_digits=10)
-    filter = models.ManyToManyField(Filter, verbose_name=u'Фильтр для товара', blank=True, null=True)
+    # filter = models.ManyToManyField(Filter, verbose_name=u'Фильтр для товара', blank=True, null=True)
     print_type = models.ManyToManyField(PrintType, verbose_name=u'Нанесение для товара', blank=True, null=True)
+    maker = models.ForeignKey(Maker)
     stock = generic.GenericRelation(Stock)
+
 
 class SubTovar(models.Model):
 
@@ -113,6 +116,7 @@ class SubTovar(models.Model):
     weight = models.DecimalField(u'Вес', decimal_places=2, max_digits=10)
     price = models.DecimalField(u'Цена', decimal_places=2, max_digits=10)
     tovar = models.ForeignKey(Tovar)
+    maker = models.ForeignKey(Maker)
     stock = generic.GenericRelation(Stock)
 
 

@@ -13,3 +13,4 @@ def category_list(request):
         {
             'categorys': categorys,
             }, context_instance=RequestContext(request), )
+

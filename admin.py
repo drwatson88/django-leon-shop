@@ -3,8 +3,8 @@
 from django.contrib import admin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
-from models import Category, CategoryXML, SubTovar, Tovar, Status, Pack, Group, \
-    FilterType, Filter, PrintType, TovarAttachment
+from models import  Category, CategoryXML, SubTovar, Tovar, Status, Pack, Group, \
+                    PrintType, TovarAttachment, Maker
 
 
 
@@ -13,6 +13,13 @@ class StatusAdmin(admin.ModelAdmin):
     pass
 
 admin.site.register(Status, StatusAdmin)
+
+
+class MakerAdmin(admin.ModelAdmin):
+
+    pass
+
+admin.site.register(Maker, MakerAdmin)
 
 
 class CategoryXMLAdmin(TreeAdmin):
@@ -50,18 +57,18 @@ class PackAdmin(admin.ModelAdmin):
 admin.site.register(Pack, PackAdmin)
 
 
-class FilterTypeAdmin(admin.ModelAdmin):
-
-    pass
-
-admin.site.register(FilterType, FilterTypeAdmin)
-
-
-class FilterAdmin(admin.ModelAdmin):
-
-    pass
-
-admin.site.register(Filter, FilterAdmin)
+# class FilterTypeAdmin(admin.ModelAdmin):
+#
+#     pass
+#
+# admin.site.register(FilterType, FilterTypeAdmin)
+#
+#
+# class FilterAdmin(admin.ModelAdmin):
+#
+#     pass
+#
+# admin.site.register(Filter, FilterAdmin)
 
 
 class PrintTypeAdmin(admin.ModelAdmin):
