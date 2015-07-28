@@ -18,14 +18,18 @@ class Maker(models.Model):
 class Category(MP_Node):
 
     def path_for_object(instance, filename):
-        file_name, file_ext = os.path.splitext(unicode(filename))
-        return u'upload_category/' + slugify(file_name) + file_ext
+        file_path, file_ext = os.path.splitext(unicode(filename))
+        return u'{}/{}/{}{}'.format(u'upload_category', os.path.split(file_path)[0],
+                                  slugify(os.path.split(file_path)[1]), file_ext)
 
     parent = models.ForeignKey(u'self', verbose_name=u'Категория', blank=True, null=True, editable=False)
     name = models.CharField(u'Заголовок', max_length=255)
     show = models.BooleanField(u'Показывать', default=True)
     image = models.ImageField(u'Изображение', upload_to=path_for_object, blank=True, null=True)
     uri = models.CharField(u'Имя ссылки', max_length=255)
+
+    def getchildrens(self):
+        return Category.get_children(self).filter(show=True)
 
 
 class CategoryXML(MP_Node):
@@ -34,6 +38,7 @@ class CategoryXML(MP_Node):
     name = models.CharField(u'Заголовок', max_length=255)
     page_id = models.CharField(u'id категории в системе поставщика', blank=True, null=True, max_length=100)
     uri = models.CharField(u'Имя ссылки', max_length=255)
+    category = models.ForeignKey(Category, verbose_name=u'Категория на сайте', blank=True, null=True, related_name=u'categorys_xml')
     maker = models.ForeignKey(Maker)
 
 
@@ -85,6 +90,10 @@ class Stock(models.Model):
 
 class Tovar(models.Model):
 
+    def path_for_object(instance, filename):
+        _filename, _fileext = os.path.splitext(unicode(filename))
+        return u'upload_tovar/' + slugify(_filename) + _fileext
+
     name = models.CharField(u'Заголовок', max_length=255)
     product_id = models.CharField(u'id товара в системе поставщика', max_length=50)
     categoryxml = models.ManyToManyField(CategoryXML, verbose_name=u'Категория для товара', blank=True, null=True)
@@ -93,9 +102,9 @@ class Tovar(models.Model):
     code = models.CharField(u'Артикул', max_length=50)
     product_size = models.CharField(u'Размеры', max_length=50)
     matherial = models.CharField(u'Материал', max_length=50)
-    small_image = models.CharField(u'Путь к файлу картинки 200х200', max_length=255)
-    big_image = models.CharField(u'Путь к файлу картинки 280х280', max_length=255)
-    super_big_image = models.CharField(u'Путь к файлу картинки 1000х1000', max_length=255)
+    small_image = models.ImageField(u'Путь к файлу картинки 200х200', upload_to=path_for_object, blank=True, null=True)
+    big_image = models.ImageField(u'Путь к файлу картинки 280х280', upload_to=path_for_object, blank=True, null=True)
+    super_big_image = models.ImageField(u'Путь к файлу картинки 1000х1000', upload_to=path_for_object, blank=True, null=True)
     content = models.CharField(u'Описание', max_length=1000)
     brand = models.CharField(u'Бренд', max_length=50)
     weight = models.DecimalField(u'Вес',  decimal_places=2, max_digits=10)
@@ -133,8 +142,12 @@ class Pack(models.Model):
 
 class TovarAttachment(models.Model):
 
+    def path_for_object(instance, filename):
+        _filename, _fileext = os.path.splitext(unicode(filename))
+        return u'upload_tovar/' + slugify(_filename) + _fileext
+
     meaning = models.IntegerField(u'Тип файла')
-    file = models.CharField(u'URL доп.файла', max_length=255)
-    image = models.CharField(u'URL доп.картинки', max_length=255)
+    file = models.FileField(u'URL доп.файла', upload_to=path_for_object, blank=True, null=True)
+    image = models.ImageField(u'URL доп.картинки', upload_to=path_for_object, blank=True, null=True)
     name = models.CharField(u'Описание доп.файла или картинки', max_length=255)
     tovar = models.ForeignKey(Tovar)
