@@ -34,8 +34,6 @@ from forms import TovarFormFilter
 #     }, context_instance=RequestContext(request), )
 
 
-
-
 def catalog_main(request):
     categorys = Category.get_root_nodes().filter(show=True)
     return render_to_response(
@@ -44,7 +42,6 @@ def catalog_main(request):
             u'categorys': categorys
 
             }, context_instance=RequestContext(request), )
-
 
 
 # class CatalogView(ContextMixin, FormMixin, ListView):

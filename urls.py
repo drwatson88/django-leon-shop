@@ -9,6 +9,6 @@ urlpatterns = patterns(
     # url(r'(.*)/(.*)/$', 'tovar_inside', name='tovar_inside'),
     # url(r'(.*)/$', 'category_inside', name='catalog_inside'),
     # url(r'$', 'category_list', name='catalog_list'), )
-    url(r'(?P<catalog_id>.*)/$', CatalogView.as_view()),
+    # url(r'(?P<catalog_id>.*)/$', CatalogView.as_view()),
     url(r'$', u'catalog_main', name=u'catalog_main'),)
     # url(r'(?P<p_catalog_id>.*)/(?P<catalog_id>.*)/$', CatalogView.as_view(), name=u'subcatalog_inside'))
