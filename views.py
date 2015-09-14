@@ -82,7 +82,11 @@ class CatalogView(FormMixin, ListView):
         return super(CatalogView, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
-        tovars = Tovar.objects.all()
+        catalog_id = self.kwargs[u'catalog_id']
+        category = Category.objects.filter(id=catalog_id)[0]
+        categorys_xml = list(category.categorys_xml.all().values_list(u'id'))
+        tovars = Tovar.objects.filter(categoryxml__in=categorys_xml)
+        print tovars
 
         form_lst = [u'maker', u'price_fr', u'price_to']
 
