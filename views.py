@@ -49,7 +49,7 @@ class CatalogView(FormMixin, ListView):
 
     form_class = TovarFormFilter
     template_name = u'catalog/catalog_inside.html'
-    context_object_name = u'obj'
+    context_object_name = u'obj_list'
     paginate_by = 30
 
     def get_context_data(self, **kwargs):
@@ -60,6 +60,8 @@ class CatalogView(FormMixin, ListView):
             3, 3, 3)
         # cd['query'] = self.get_query(self.form)
         cd[u'form'] = self.form
+        cd[u'category'] = self.category
+        cd[u'category_childrens'] = self.category_childrens
         return cd
 
     # def get_query(self, form):
@@ -82,30 +84,41 @@ class CatalogView(FormMixin, ListView):
         return super(CatalogView, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
+
+        self.form.fields[u'makers'].choices = \
+            [(x.id, x) for x in Maker.objects.all()]
+
         catalog_id = self.kwargs[u'catalog_id']
-        category = Category.objects.filter(id=catalog_id)[0]
-        categorys_xml = list(category.categorys_xml.all().values_list(u'id'))
+        self.category = Category.objects.filter(id=catalog_id)[0]
+        self.category_childrens = self.category.getchildrens()
+
+        categorys_xml = list(self.category.categorys_xml.all().values_list(u'id'))
+        for cat in self.category_childrens:
+            categorys_xml.extend(cat.categorys_xml.all().values_list(u'id'))
+
         tovars = Tovar.objects.filter(categoryxml__in=categorys_xml)
         print tovars
 
-        form_lst = [u'maker', u'price_fr', u'price_to']
+        form_lst = [u'makers', u'price_fr', u'price_to']
 
         fpage = True
+        post = True if self.request.method==u'POST' else False
         for p in form_lst:
             try:
                 obj_numb = self.request.POST.get(p, u'')
-                # print p, obj_numb
-                if p == u'maker' and obj_numb:
-                    obj = Maker.objects.get(id=int(obj_numb))
-                    tovars = tovars.filter(maker=obj)
+                print p, obj_numb
+                if p == u'makers' and post:
+                    post_makers = self.request.POST.getlist(p, u'')
+                    makers = Maker.objects.filter(id__in=post_makers)
+                    tovars = tovars.filter(maker__in=makers)
                     CatalogView.paginate_by = 1000
                     fpage = False
-                elif p == u'price_fr' and obj_numb:
+                elif p == u'price_fr' and obj_numb and post:
                     # obj = CatalogView.objects.get(id=int(obj_numb))
                     tovars = tovars.filter(price__gte=obj_numb)
                     CatalogView.paginate_by = 1000
                     fpage = False
-                elif p == u'price_to' and obj_numb:
+                elif p == u'price_to' and obj_numb and post:
                     tovars = tovars.filter(price__lte=obj_numb)
                     CatalogView.paginate_by = 1000
                     fpage = False

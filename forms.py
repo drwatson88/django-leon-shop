@@ -16,4 +16,7 @@ class Mixin(object):
 
 class TovarFormFilter(Mixin, forms.Form):
 
-    maker = forms.ModelChoiceField(queryset=Maker.objects.all(), empty_label=None)
+    # maker = forms.ModelChoiceField(queryset=Maker.objects.all(), empty_label=None)
+    makers = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, label=u'')
+    price_fr = forms.IntegerField(max_value=1000000, min_value=0)
+    price_to = forms.IntegerField(max_value=1000000, min_value=1)
