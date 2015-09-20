@@ -44,7 +44,6 @@ def catalog_main(request):
             }, context_instance=RequestContext(request), )
 
 
-# class CatalogView(ContextMixin, FormMixin, ListView):
 class CatalogView(FormMixin, ListView):
 
     form_class = TovarFormFilter
@@ -60,8 +59,10 @@ class CatalogView(FormMixin, ListView):
             3, 3, 3)
         # cd['query'] = self.get_query(self.form)
         cd[u'form'] = self.form
-        cd[u'category'] = self.category
-        cd[u'category_childrens'] = self.category_childrens
+        cd[u'categorys'] = self.categorys
+        cd[u'parent_category'] = self.parent_category
+        cd[u'childrens_categorys'] = self.childrens_categorys
+        # cd[u'current_category'] = self.current_category
         return cd
 
     # def get_query(self, form):
@@ -89,16 +90,24 @@ class CatalogView(FormMixin, ListView):
             [(x.id, x) for x in Maker.objects.all()]
 
         catalog_id = self.kwargs[u'catalog_id']
-        self.category = Category.objects.filter(id=catalog_id)[0]
-        self.category_childrens = self.category.getchildrens()
+        self.categorys = Category.get_root_nodes()
+        self.current_category = Category.objects.filter(id=catalog_id)[0]
 
-        categorys_xml = list(self.category.categorys_xml.all().values_list(u'id'))
-        for cat in self.category_childrens:
+        #TODO: сделать обработку исключения и выход на 404 при отсутсвии категории
+        self.parent_category = self.current_category.get_parent()
+        if not self.parent_category:
+            self.parent_category = self.current_category
+            self.parent_category.selected = True
+        else:
+            self.parent_category.selected = False
+
+        categorys_xml = list(self.parent_category.categorys_xml.all().values_list(u'id'))
+        self.childrens_categorys = self.parent_category.getchildrens()
+        for cat in self.childrens_categorys:
             categorys_xml.extend(cat.categorys_xml.all().values_list(u'id'))
+            cat.selected = True if cat.id == self.current_category.id else False
 
         tovars = Tovar.objects.filter(categoryxml__in=categorys_xml)
-        print tovars
-
         form_lst = [u'makers', u'price_fr', u'price_to']
 
         fpage = True
@@ -129,20 +138,35 @@ class CatalogView(FormMixin, ListView):
         return tovars.order_by(u'-id')
 
 
+def tovar_card(request, *args, **kwargs):
 
+    catalog_id = kwargs[u'catalog_id']
+    tovar_id = kwargs[u'tovar_id']
+    print kwargs
 
+    tovar = Tovar.objects.get(id=tovar_id)
+    categorys = Category.get_root_nodes()
+    current_category = Category.objects.filter(id=catalog_id)[0]
 
-    # template_name
-    #
-    # def get(self, request, *args, **kwargs):
-    #
-    #     print args, kwargs
-    #     # Tovars=Tovar.objects.filter(category)
-    #     return render_to_response(
-    #         'catalog/tmp2.html',
-    #         {
-    #             # 'categorys': categorys,
-    #             }, context_instance=RequestContext(request), )
-    #
-    # def post(self):
-    #     pass
+    #TODO: сделать обработку исключения и выход на 404 при отсутсвии категории
+    parent_category = current_category.get_parent()
+    if not parent_category:
+        parent_category = current_category
+        parent_category.selected = True
+    else:
+        parent_category.selected = False
+
+    categorys_xml = list(parent_category.categorys_xml.all().values_list(u'id'))
+    childrens_categorys = parent_category.getchildrens()
+    for cat in childrens_categorys:
+        categorys_xml.extend(cat.categorys_xml.all().values_list(u'id'))
+        cat.selected = True if cat.id == current_category.id else False
+
+    return render_to_response(
+        u'catalog/tovar_card.html',
+        {
+            u'categorys': categorys,
+            u'parent_category': parent_category,
+            u'tovar': tovar,
+
+            }, context_instance=RequestContext(request), )
