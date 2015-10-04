@@ -28,6 +28,13 @@ class Maker(models.Model):
     name = models.CharField(u'Поставщик', max_length=255)
     code = models.IntegerField(u"Код")
 
+    class Meta:
+        verbose_name = 'Поставщик'
+        verbose_name_plural = 'Поставщики'
+
+    def __unicode__(self):
+        return self.title
+
 
 class Category(MP_Node):
 
@@ -40,6 +47,13 @@ class Category(MP_Node):
     def getchildrens(self):
         return Category.get_children(self).filter(show=True)
 
+    class Meta:
+        verbose_name = 'Категорию'
+        verbose_name_plural = 'Категории'
+
+    def __unicode__(self):
+        return (self.depth - 1) * "---" + self.title
+
 
 class CategoryXML(MP_Node):
 
@@ -49,6 +63,13 @@ class CategoryXML(MP_Node):
     uri = models.CharField(u'Имя ссылки', max_length=255)
     category = models.ForeignKey(Category, verbose_name=u'Категория на сайте', blank=True, null=True, related_name=u'categorys_xml')
     maker = models.ForeignKey(Maker)
+
+    class Meta:
+        verbose_name = 'Категорию от поставщика'
+        verbose_name_plural = 'Категории от поставщиков'
+
+    def __unicode__(self):
+        return (self.depth - 1) * "---" + self.title
 
 
 class Group(models.Model):
@@ -60,6 +81,13 @@ class Status(models.Model):
 
     name = models.CharField(u'Статус', max_length=255)
     status_id = models.IntegerField(u'id статуса в системе поставщика', blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Статус'
+        verbose_name_plural = 'Статусы'
+
+    def __unicode__(self):
+        return self.title
 
 
 class PrintType(models.Model):
@@ -105,12 +133,12 @@ class Tovar(models.Model):
     group = models.ForeignKey(Group, verbose_name=u'Группа товара', blank=True, null=True)
     status = models.ForeignKey(Status, verbose_name=u'Статус', blank=True, null=True)
     code = models.CharField(u'Артикул', max_length=50)
-    product_size = models.CharField(u'Размеры', max_length=50)
+    product_size = models.CharField(u'Размеры', max_length=200)
     matherial = models.CharField(u'Материал', max_length=50)
     small_image = models.ImageField(u'Путь к файлу картинки 200х200', upload_to=path_for_tovar_image, blank=True, null=True)
     big_image = models.ImageField(u'Путь к файлу картинки 280х280', upload_to=path_for_tovar_image, blank=True, null=True)
     super_big_image = models.ImageField(u'Путь к файлу картинки 1000х1000', upload_to=path_for_tovar_image, blank=True, null=True)
-    content = models.CharField(u'Описание', max_length=1000)
+    content = models.CharField(u'Описание', max_length=4000)
     brand = models.CharField(u'Бренд', max_length=50)
     weight = models.DecimalField(u'Вес',  decimal_places=2, max_digits=10)
     price = models.DecimalField(u'Цена',  decimal_places=2, max_digits=10)
@@ -118,6 +146,18 @@ class Tovar(models.Model):
     print_type = models.ManyToManyField(PrintType, verbose_name=u'Нанесение для товара', blank=True, null=True)
     maker = models.ForeignKey(Maker)
     stock = generic.GenericRelation(Stock)
+
+    def __unicode__(self):
+        return self.title
+
+    def photos(self):
+        return TovarAttachment.objects.filter(tovar=self, meaning=1)
+
+
+    class Meta:
+        ordering = ('price',)
+        verbose_name = 'Товар'
+        verbose_name_plural = 'Товары'
 
 
 class SubTovar(models.Model):
@@ -152,3 +192,16 @@ class TovarAttachment(models.Model):
     image = models.ImageField(u'URL доп.картинки', upload_to=path_for_tovar_attach, blank=True, null=True)
     name = models.CharField(u'Описание доп.файла или картинки', max_length=255)
     tovar = models.ForeignKey(Tovar)
+
+
+class MSettings(models.Model):
+    title = models.CharField('Заголовок раздела', max_length=128)
+    content = models.TextField('Контент основной страницы раздела', blank=True, null=True)
+    contentSEO = models.TextField('Контент для SEO', blank=True, null=True)
+    metatitle = models.CharField('Заголовок для SEO', max_length=1000, blank=True, null=True)
+    metakey = models.CharField('Meta key', max_length=5000, blank=True, null=True)
+    metades = models.CharField('Meta des', max_length=5000, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Настройка раздела Каталог'
+        verbose_name_plural = 'Настройки раздела Каталог'

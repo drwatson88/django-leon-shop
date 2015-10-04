@@ -10,7 +10,7 @@ from django.views.generic.edit import FormMixin, ContextMixin
 
 from utils.Pagination import PageRange
 
-from models import Category, Tovar, Maker
+from models import Category, Tovar, SubTovar, Stock, Maker
 from forms import TovarFormFilter
 
 
@@ -142,9 +142,30 @@ def tovar_card(request, *args, **kwargs):
 
     catalog_id = kwargs[u'catalog_id']
     tovar_id = kwargs[u'tovar_id']
-    print kwargs
 
+    """
+    По товарам работа
+    """
     tovar = Tovar.objects.get(id=tovar_id)
+
+    stock_current = tovar.stock.all()
+    tovar.stock_current = stock_current[0] if stock_current else stock_current
+
+    pack_current = tovar.pack_set.all()
+    tovar.pack_current = pack_current[0] if pack_current else pack_current
+
+    tovar.image_current = tovar.super_big_image or tovar.big_image or tovar.small_image
+    tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
+    tovar.attach_files = tovar.tovarattachment_set.filter(meaning=0)
+
+    subtovars = SubTovar.objects.filter(tovar=tovar)
+    for subtovar in subtovars:
+        stock_current = subtovar.stock.all()
+        subtovar.stock_current = stock_current[0] if stock_current else stock_current
+
+    """
+    По категориям работа для sidebara
+    """
     categorys = Category.get_root_nodes()
     current_category = Category.objects.filter(id=catalog_id)[0]
 
@@ -167,6 +188,9 @@ def tovar_card(request, *args, **kwargs):
         {
             u'categorys': categorys,
             u'parent_category': parent_category,
+            u'childrens_categorys': childrens_categorys,
+
             u'tovar': tovar,
+            u'subtovars': subtovars,
 
             }, context_instance=RequestContext(request), )
