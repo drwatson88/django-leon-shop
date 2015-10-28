@@ -38,11 +38,20 @@ class Maker(models.Model):
 
 class Category(MP_Node):
 
-    parent = models.ForeignKey(u'self', verbose_name='Категория', blank=True, null=True, editable=False)
-    name = models.CharField(u'Заголовок', max_length=255)
-    show = models.BooleanField(u'Показывать', default=True)
-    image = models.ImageField(u'Изображение', upload_to=path_for_cat_image, blank=True, null=True)
-    uri = models.CharField(u'Имя ссылки', max_length=255)
+    parent = models.ForeignKey('self', verbose_name='Категория', blank=True, null=True, editable=False)
+    name = models.CharField('Заголовок', max_length=255)
+    slug_title = models.SlugField('Имя для ссылки', unique=False)
+    preview = models.CharField('Краткое описание', max_length=2550)
+    content = models.TextField('Описание', blank=True, null=True)
+    contentSEO = models.TextField('Описание для SEO', blank=True, null=True)
+    show = models.BooleanField('Показывать', default=True)
+    image = models.ImageField('Изображение', upload_to=path_for_cat_image, blank=True, null=True)
+    uri = models.CharField('Имя ссылки', max_length=255)
+    position = models.IntegerField('Позиция', blank=True, null=True)
+
+    title_seo = models.CharField('Заголовок для SEO', max_length=255, blank=True, null=True)
+    metakey = models.CharField('Meta key', max_length=255, blank=True, null=True)
+    metades = models.CharField('Meta des', max_length=255, blank=True, null=True)
 
     def getchildrens(self):
         return Category.get_children(self).filter(show=True)
@@ -61,7 +70,8 @@ class CategoryXML(MP_Node):
     name = models.CharField('Заголовок', max_length=255)
     page_id = models.CharField('id категории в системе поставщика', blank=True, null=True, max_length=100)
     uri = models.CharField('Имя ссылки', max_length=255)
-    category = models.ForeignKey(Category, verbose_name='Категория на сайте', blank=True, null=True, related_name='categorys_xml')
+    category = models.ForeignKey(Category, verbose_name='Категория на сайте', blank=True, null=True,
+                                 related_name='categorys_xml')
     maker = models.ForeignKey(Maker)
 
     class Meta:
@@ -94,6 +104,13 @@ class PrintType(models.Model):
 
     name = models.CharField('Код вида нанесения', max_length=100)
     description = models.CharField('Название вида нанесения', max_length=255)
+
+    class Meta:
+        verbose_name = 'Вид нанесения'
+        verbose_name_plural = 'Виды нанесения'
+
+    def __unicode__(self):
+        return self.description
 
 
 # class FilterType(models.Model):

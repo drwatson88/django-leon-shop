@@ -35,7 +35,16 @@ from forms import TovarFormFilter
 
 
 def catalog_main(request):
-    categorys = Category.get_root_nodes().filter(show=True)
+
+    p = 0
+    k = 6
+    categorys = list()
+    categorys_queue = Category.get_root_nodes().filter(show=True)
+
+    while p < len(categorys_queue):
+        categorys.append(categorys_queue[p:p+k])
+        p = p + k
+
     return render_to_response(
         u'catalog/catalog_main.html',
         {
@@ -62,7 +71,7 @@ class CatalogView(FormMixin, ListView):
         cd[u'categorys'] = self.categorys
         cd[u'parent_category'] = self.parent_category
         cd[u'childrens_categorys'] = self.childrens_categorys
-        # cd[u'current_category'] = self.current_category
+        cd[u'current_category'] = self.current_category
         return cd
 
     # def get_query(self, form):
@@ -101,10 +110,11 @@ class CatalogView(FormMixin, ListView):
         else:
             self.parent_category.selected = False
 
-        categorys_xml = list(self.parent_category.categorys_xml.all().values_list(u'id'))
+        categorys_xml = list(self.current_category.categorys_xml.all().values_list(u'id'))
         self.childrens_categorys = self.parent_category.getchildrens()
         for cat in self.childrens_categorys:
-            categorys_xml.extend(cat.categorys_xml.all().values_list(u'id'))
+            if self.parent_category.id == self.current_category.id:
+                categorys_xml.extend(cat.categorys_xml.all().values_list(u'id'))
             cat.selected = True if cat.id == self.current_category.id else False
 
         tovars = Tovar.objects.filter(categoryxml__in=categorys_xml)
@@ -138,7 +148,7 @@ class CatalogView(FormMixin, ListView):
         return tovars.order_by(u'-id')
 
 
-def tovar_card(request, *args, **kwargs):
+def tovar_inside(request, *args, **kwargs):
 
     catalog_id = kwargs[u'catalog_id']
     tovar_id = kwargs[u'tovar_id']
@@ -184,7 +194,7 @@ def tovar_card(request, *args, **kwargs):
         cat.selected = True if cat.id == current_category.id else False
 
     return render_to_response(
-        u'catalog/tovar_card.html',
+        u'catalog/tovar_inside.html',
         {
             u'categorys': categorys,
             u'parent_category': parent_category,
