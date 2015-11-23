@@ -176,10 +176,8 @@ def tovar_inside(request, *args, **kwargs):
     По категориям работа для sidebara
     """
     categorys_xml = tovar.categoryxml.all()
-    print categorys_xml
-    path_categorys = [cat_xml.category for cat_xml in categorys_xml]
-    print path_categorys
-    current_category = path_categorys[1]
+    path_categorys = [cat_xml.category for cat_xml in categorys_xml if cat_xml.category is not None]
+    current_category = path_categorys[0]
 
     categorys = Category.get_root_nodes()
 
@@ -206,36 +204,3 @@ def tovar_inside(request, *args, **kwargs):
             u'subtovars': subtovars,
 
             }, context_instance=RequestContext(request), )
-
-
-# def tovar_nocat_inside(request, *args, **kwargs):
-#
-#     tovar_id = kwargs[u'tovar_id']
-#
-#     """
-#     По товарам работа
-#     """
-#     tovar = Tovar.objects.get(id=tovar_id)
-#
-#     stock_current = tovar.stock.all()
-#     tovar.stock_current = stock_current[0] if stock_current else stock_current
-#
-#     pack_current = tovar.pack_set.all()
-#     tovar.pack_current = pack_current[0] if pack_current else pack_current
-#
-#     tovar.image_current = tovar.super_big_image or tovar.big_image or tovar.small_image
-#     tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
-#     tovar.attach_files = tovar.tovarattachment_set.filter(meaning=0)
-#
-#     subtovars = SubTovar.objects.filter(tovar=tovar)
-#     for subtovar in subtovars:
-#         stock_current = subtovar.stock.all()
-#         subtovar.stock_current = stock_current[0] if stock_current else stock_current
-#
-#     return render_to_response(
-#         u'catalog/tovar_nocat_inside.html',
-#         {
-#             u'tovar': tovar,
-#             u'subtovars': subtovars,
-#
-#             }, context_instance=RequestContext(request), )
