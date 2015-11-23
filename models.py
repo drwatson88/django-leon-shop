@@ -147,6 +147,7 @@ class Tovar(models.Model):
     name = models.CharField('Заголовок', max_length=255)
     product_id = models.CharField('id товара в системе поставщика', max_length=50)
     categoryxml = models.ManyToManyField(CategoryXML, verbose_name='Категория для товара', blank=True, null=True)
+    slug_title = models.SlugField('Имя для ссылки', unique=False)
     group = models.ForeignKey(Group, verbose_name='Группа товара', blank=True, null=True)
     status = models.ForeignKey(Status, verbose_name='Статус', blank=True, null=True)
     code = models.CharField('Артикул', max_length=50)
@@ -212,6 +213,7 @@ class TovarAttachment(models.Model):
 
 
 class MSettings(models.Model):
+
     title = models.CharField('Заголовок раздела', max_length=128)
     content = models.TextField('Контент основной страницы раздела', blank=True, null=True)
     contentSEO = models.TextField('Контент для SEO', blank=True, null=True)

@@ -98,9 +98,9 @@ class CatalogView(FormMixin, ListView):
         self.form.fields[u'makers'].choices = \
             [(x.id, x) for x in Maker.objects.all()]
 
-        catalog_id = self.kwargs[u'catalog_id']
+        catalog_slug_title = self.kwargs[u'catalog_slug_title']
         self.categorys = Category.get_root_nodes()
-        self.current_category = Category.objects.filter(id=catalog_id)[0]
+        self.current_category = Category.objects.filter(slug_title=catalog_slug_title)[0]
 
         #TODO: сделать обработку исключения и выход на 404 при отсутсвии категории
         self.parent_category = self.current_category.get_parent()
@@ -150,13 +150,12 @@ class CatalogView(FormMixin, ListView):
 
 def tovar_inside(request, *args, **kwargs):
 
-    catalog_id = kwargs[u'catalog_id']
-    tovar_id = kwargs[u'tovar_id']
+    tovar_slug_title = kwargs[u'tovar_slug_title']
 
     """
     По товарам работа
     """
-    tovar = Tovar.objects.get(id=tovar_id)
+    tovar = Tovar.objects.filter(slug_title=tovar_slug_title)[0]
 
     stock_current = tovar.stock.all()
     tovar.stock_current = stock_current[0] if stock_current else stock_current
@@ -176,8 +175,13 @@ def tovar_inside(request, *args, **kwargs):
     """
     По категориям работа для sidebara
     """
+    categorys_xml = tovar.categoryxml.all()
+    print categorys_xml
+    path_categorys = [cat_xml.category for cat_xml in categorys_xml]
+    print path_categorys
+    current_category = path_categorys[1]
+
     categorys = Category.get_root_nodes()
-    current_category = Category.objects.filter(id=catalog_id)[0]
 
     #TODO: сделать обработку исключения и выход на 404 при отсутсвии категории
     parent_category = current_category.get_parent()
@@ -187,10 +191,8 @@ def tovar_inside(request, *args, **kwargs):
     else:
         parent_category.selected = False
 
-    categorys_xml = list(parent_category.categorys_xml.all().values_list(u'id'))
     childrens_categorys = parent_category.getchildrens()
     for cat in childrens_categorys:
-        categorys_xml.extend(cat.categorys_xml.all().values_list(u'id'))
         cat.selected = True if cat.id == current_category.id else False
 
     return render_to_response(
@@ -206,34 +208,34 @@ def tovar_inside(request, *args, **kwargs):
             }, context_instance=RequestContext(request), )
 
 
-def tovar_nocat_inside(request, *args, **kwargs):
-
-    tovar_id = kwargs[u'tovar_id']
-
-    """
-    По товарам работа
-    """
-    tovar = Tovar.objects.get(id=tovar_id)
-
-    stock_current = tovar.stock.all()
-    tovar.stock_current = stock_current[0] if stock_current else stock_current
-
-    pack_current = tovar.pack_set.all()
-    tovar.pack_current = pack_current[0] if pack_current else pack_current
-
-    tovar.image_current = tovar.super_big_image or tovar.big_image or tovar.small_image
-    tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
-    tovar.attach_files = tovar.tovarattachment_set.filter(meaning=0)
-
-    subtovars = SubTovar.objects.filter(tovar=tovar)
-    for subtovar in subtovars:
-        stock_current = subtovar.stock.all()
-        subtovar.stock_current = stock_current[0] if stock_current else stock_current
-
-    return render_to_response(
-        u'catalog/tovar_nocat_inside.html',
-        {
-            u'tovar': tovar,
-            u'subtovars': subtovars,
-
-            }, context_instance=RequestContext(request), )
+# def tovar_nocat_inside(request, *args, **kwargs):
+#
+#     tovar_id = kwargs[u'tovar_id']
+#
+#     """
+#     По товарам работа
+#     """
+#     tovar = Tovar.objects.get(id=tovar_id)
+#
+#     stock_current = tovar.stock.all()
+#     tovar.stock_current = stock_current[0] if stock_current else stock_current
+#
+#     pack_current = tovar.pack_set.all()
+#     tovar.pack_current = pack_current[0] if pack_current else pack_current
+#
+#     tovar.image_current = tovar.super_big_image or tovar.big_image or tovar.small_image
+#     tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
+#     tovar.attach_files = tovar.tovarattachment_set.filter(meaning=0)
+#
+#     subtovars = SubTovar.objects.filter(tovar=tovar)
+#     for subtovar in subtovars:
+#         stock_current = subtovar.stock.all()
+#         subtovar.stock_current = stock_current[0] if stock_current else stock_current
+#
+#     return render_to_response(
+#         u'catalog/tovar_nocat_inside.html',
+#         {
+#             u'tovar': tovar,
+#             u'subtovars': subtovars,
+#
+#             }, context_instance=RequestContext(request), )
