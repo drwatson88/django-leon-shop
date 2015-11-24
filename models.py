@@ -171,6 +171,8 @@ class Tovar(models.Model):
     def photos(self):
         return TovarAttachment.objects.filter(tovar=self, meaning=1)
 
+    def get_type(self):
+        return 0
 
     class Meta:
         ordering = ('price',)
@@ -190,6 +192,9 @@ class SubTovar(models.Model):
     tovar = models.ForeignKey(Tovar)
     maker = models.ForeignKey(Maker)
     stock = generic.GenericRelation(Stock)
+
+    def get_type(self):
+        return 1
 
 
 class Pack(models.Model):
