@@ -46,9 +46,9 @@ def catalog_main(request):
         p = p + k
 
     return render_to_response(
-        u'catalog/catalog_main.html',
+        'catalog/catalog_main.html',
         {
-            u'categorys': categorys
+            'categorys': categorys
 
             }, context_instance=RequestContext(request), )
 
@@ -56,22 +56,23 @@ def catalog_main(request):
 class CatalogView(FormMixin, ListView):
 
     form_class = TovarFormFilter
-    template_name = u'catalog/catalog_inside.html'
-    context_object_name = u'obj_list'
+    template_name = 'catalog/catalog_inside.html'
+    context_object_name = 'obj_list'
     paginate_by = 30
+
 
     def get_context_data(self, **kwargs):
         cd = super(CatalogView, self).get_context_data(**kwargs)
-        cd[u'page_range'] = PageRange(
-            cd[u'page_obj'].number,
-            cd[u'page_obj'].paginator.num_pages,
+        cd['page_range'] = PageRange(
+            cd['page_obj'].number,
+            cd['page_obj'].paginator.num_pages,
             3, 3, 3)
         # cd['query'] = self.get_query(self.form)
-        cd[u'form'] = self.form
-        cd[u'categorys'] = self.categorys
-        cd[u'parent_category'] = self.parent_category
-        cd[u'childrens_categorys'] = self.childrens_categorys
-        cd[u'current_category'] = self.current_category
+        cd['form'] = self.form
+        cd['categorys'] = self.categorys
+        cd['parent_category'] = self.parent_category
+        cd['childrens_categorys'] = self.childrens_categorys
+        cd['current_category'] = self.current_category
         return cd
 
     # def get_query(self, form):
@@ -88,17 +89,19 @@ class CatalogView(FormMixin, ListView):
         self.form = self.get_form(form_class)
         return super(CatalogView, self).get(request, *args, **kwargs)
 
+
     def post(self, request, *args, **kwargs):
         form_class = self.get_form_class()
         self.form = self.get_form(form_class)
         return super(CatalogView, self).get(request, *args, **kwargs)
 
+
     def get_queryset(self):
 
-        self.form.fields[u'makers'].choices = \
+        self.form.fields['makers'].choices = \
             [(x.id, x) for x in Maker.objects.all()]
 
-        catalog_slug_title = self.kwargs[u'catalog_slug_title']
+        catalog_slug_title = self.kwargs['catalog_slug_title']
         self.categorys = Category.get_root_nodes()
         self.current_category = Category.objects.filter(slug_title=catalog_slug_title)[0]
 
@@ -110,34 +113,34 @@ class CatalogView(FormMixin, ListView):
         else:
             self.parent_category.selected = False
 
-        categorys_xml = list(self.current_category.categorys_xml.all().values_list(u'id'))
+        categorys_xml = list(self.current_category.categorys_xml.all().values_list('id'))
         self.childrens_categorys = self.parent_category.getchildrens()
         for cat in self.childrens_categorys:
             if self.parent_category.id == self.current_category.id:
-                categorys_xml.extend(cat.categorys_xml.all().values_list(u'id'))
+                categorys_xml.extend(cat.categorys_xml.all().values_list('id'))
             cat.selected = True if cat.id == self.current_category.id else False
 
         tovars = Tovar.objects.filter(categoryxml__in=categorys_xml)
-        form_lst = [u'makers', u'price_fr', u'price_to']
+        form_lst = ['makers', 'price_fr', 'price_to']
 
         fpage = True
-        post = True if self.request.method==u'POST' else False
+        post = True if self.request.method=='POST' else False
         for p in form_lst:
             try:
-                obj_numb = self.request.POST.get(p, u'')
+                obj_numb = self.request.POST.get(p, '')
                 print p, obj_numb
-                if p == u'makers' and post:
-                    post_makers = self.request.POST.getlist(p, u'')
+                if p == 'makers' and post:
+                    post_makers = self.request.POST.getlist(p, '')
                     makers = Maker.objects.filter(id__in=post_makers)
                     tovars = tovars.filter(maker__in=makers)
                     CatalogView.paginate_by = 1000
                     fpage = False
-                elif p == u'price_fr' and obj_numb and post:
+                elif p == 'price_fr' and obj_numb and post:
                     # obj = CatalogView.objects.get(id=int(obj_numb))
                     tovars = tovars.filter(price__gte=obj_numb)
                     CatalogView.paginate_by = 1000
                     fpage = False
-                elif p == u'price_to' and obj_numb and post:
+                elif p == 'price_to' and obj_numb and post:
                     tovars = tovars.filter(price__lte=obj_numb)
                     CatalogView.paginate_by = 1000
                     fpage = False
@@ -145,12 +148,12 @@ class CatalogView(FormMixin, ListView):
                 pass
         if fpage:
             CatalogView.paginate_by = 30
-        return tovars.order_by(u'-id')
+        return tovars.order_by('-id')
 
 
 def tovar_inside(request, *args, **kwargs):
 
-    tovar_slug_title = kwargs[u'tovar_slug_title']
+    tovar_slug_title = kwargs['tovar_slug_title']
 
     """
     По товарам работа
@@ -194,13 +197,13 @@ def tovar_inside(request, *args, **kwargs):
         cat.selected = True if cat.id == current_category.id else False
 
     return render_to_response(
-        u'catalog/tovar_inside.html',
+        'catalog/tovar_inside.html',
         {
-            u'categorys': categorys,
-            u'parent_category': parent_category,
-            u'childrens_categorys': childrens_categorys,
+            'categorys': categorys,
+            'parent_category': parent_category,
+            'childrens_categorys': childrens_categorys,
 
-            u'tovar': tovar,
-            u'subtovars': subtovars,
+            'tovar': tovar,
+            'subtovars': subtovars,
 
             }, context_instance=RequestContext(request), )
