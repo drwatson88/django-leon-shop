@@ -128,7 +128,6 @@ class CatalogView(FormMixin, ListView):
         for p in form_lst:
             try:
                 obj_numb = self.request.POST.get(p, '')
-                print p, obj_numb
                 if p == 'makers' and post:
                     post_makers = self.request.POST.getlist(p, '')
                     makers = Maker.objects.filter(id__in=post_makers)
