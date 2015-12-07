@@ -202,6 +202,7 @@ def tovar_inside(request, *args, **kwargs):
             'categorys': categorys,
             'parent_category': parent_category,
             'childrens_categorys': childrens_categorys,
+            'current_category': current_category,
 
             'tovar': tovar,
             'subtovars': subtovars,
