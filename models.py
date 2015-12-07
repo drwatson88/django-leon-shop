@@ -172,7 +172,7 @@ class Tovar(models.Model):
         return TovarAttachment.objects.filter(tovar=self, meaning=1)
 
     def get_type(self):
-        return 0
+        return 1
 
     class Meta:
         ordering = ('price',)
@@ -194,7 +194,7 @@ class SubTovar(models.Model):
     stock = generic.GenericRelation(Stock)
 
     def get_type(self):
-        return 1
+        return 0
 
 
 class Pack(models.Model):
