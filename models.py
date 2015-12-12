@@ -56,6 +56,11 @@ class Category(MP_Node):
     def getchildrens(self):
         return Category.get_children(self).filter(show=True)
 
+    def save(self):
+        if not self.id:
+            self.slug_title = slugify(self.slug_title)
+        super(Category, self).save()
+
     class Meta:
         verbose_name = 'Категорию'
         verbose_name_plural = 'Категории'
@@ -173,6 +178,11 @@ class Tovar(models.Model):
 
     def get_type(self):
         return 1
+
+    def save(self):
+        if not self.id:
+            self.slug_title = slugify(self.slug_title)
+        super(Tovar, self).save()
 
     class Meta:
         ordering = ('price',)
