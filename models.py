@@ -5,30 +5,16 @@ import os
 from django.db import models
 from treebeard.mp_tree import MP_Node
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
 from pytils.translit import slugify
-
-
-def path_for_cat_image(instance, filename):
-    file_path, file_ext = os.path.splitext(unicode(filename))
-    return '{}/{}/{}{}'.format('upload_category', os.path.split(file_path)[0],
-                                slugify(os.path.split(file_path)[1]), file_ext)
-
-def path_for_tovar_image(instance, filename):
-    _filename, _fileext = os.path.splitext(unicode(filename))
-    return 'upload_tovar/' + slugify(_filename) + _fileext
-
-def path_for_tovar_attach(instance, filename):
-    _filename, _fileext = os.path.splitext(unicode(filename))
-    return 'upload_tovar/' + slugify(_filename) + _fileext
 
 
 class Maker(models.Model):
 
-    name = models.CharField('Поставщик', max_length=255)
-    code = models.IntegerField("Код")
+    name = models.CharField(verbose_name='Поставщик', max_length=255)
+    code = models.IntegerField(verbose_name='ИД', unique=True)
 
     class Meta:
+
         verbose_name = 'Поставщик'
         verbose_name_plural = 'Поставщики'
 
@@ -36,66 +22,69 @@ class Maker(models.Model):
         return self.name
 
 
+class Brand(models.Model):
+
+    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+    name = models.CharField(verbose_name='Наименование', max_length=255, blank=True)
+    code = models.CharField(verbose_name='Код', max_length=255, blank=True)
+    brand_id = models.CharField(verbose_name='ИД', max_length=255)
+
+    class Meta:
+        unique_together = ('maker', 'name')
+        verbose_name = 'Брэнд'
+        verbose_name_plural = 'Брэнды'
+
+    def __unicode__(self):
+        return self.name
+
+
 class Category(MP_Node):
 
-    parent = models.ForeignKey('self', verbose_name='Категория', blank=True, null=True, editable=False)
-    name = models.CharField('Заголовок', max_length=255)
-    slug_title = models.SlugField('Имя для ссылки', unique=False)
-    preview = models.CharField('Краткое описание', max_length=2550)
+    name = models.CharField(verbose_name='Заголовок', max_length=255)
+    slug_title = models.SlugField(verbose_name='Имя для ссылки', unique=True)
+    preview = models.TextField(verbose_name='Краткое описание')
     content = models.TextField('Описание', blank=True, null=True)
-    contentSEO = models.TextField('Описание для SEO', blank=True, null=True)
-    show = models.BooleanField('Показывать', default=True)
-    image = models.ImageField('Изображение', upload_to=path_for_cat_image, blank=True, null=True)
-    uri = models.CharField('Имя ссылки', max_length=255)
-    position = models.IntegerField('Позиция', blank=True, null=True)
-
-    title_seo = models.CharField('Заголовок для SEO', max_length=255, blank=True, null=True)
-    metakey = models.CharField('Meta key', max_length=255, blank=True, null=True)
-    metades = models.CharField('Meta des', max_length=255, blank=True, null=True)
+    show = models.BooleanField(verbose_name='Показывать', default=True)
+    image = models.ImageField(verbose_name='Изображение', blank=True, null=True)
+    position = models.IntegerField(verbose_name='Позиция', blank=True, null=True)
 
     def getchildrens(self):
         return Category.get_children(self).filter(show=True)
 
-    def save(self):
+    def save(self, **kwargs):
         if not self.id:
             self.slug_title = slugify(self.slug_title)
-        super(Category, self).save()
+        super(Category, self).save(**kwargs)
 
     class Meta:
         verbose_name = 'Категорию'
         verbose_name_plural = 'Категории'
 
     def __unicode__(self):
-        return (self.depth - 1) * "---" + self.name
+        return u'{}{}'.format((self.depth - 1) * u'---', self.name)
 
 
 class CategoryXML(MP_Node):
 
-    parent = models.ForeignKey('self', verbose_name='Категория', blank=True, null=True, editable=False)
-    name = models.CharField('Заголовок', max_length=255)
-    page_id = models.CharField('id категории в системе поставщика', blank=True, null=True, max_length=100)
-    uri = models.CharField('Имя ссылки', max_length=255)
-    category = models.ForeignKey(Category, verbose_name='Категория на сайте', blank=True, null=True,
-                                 related_name='categorys_xml')
-    maker = models.ForeignKey(Maker)
+    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+    name = models.CharField(verbose_name='Заголовок', max_length=255)
+    cat_id = models.CharField(verbose_name='ИД', max_length=100)
+    category = models.ForeignKey(Category, verbose_name='Категория на сайте',
+                                 blank=True, null=True, related_name='categorys_xml')
 
     class Meta:
+        unique_together = ('maker', 'cat_id')
         verbose_name = 'Категорию от поставщика'
         verbose_name_plural = 'Категории от поставщиков'
 
     def __unicode__(self):
-        return (self.depth - 1) * "---" + self.name
-
-
-class Group(models.Model):
-
-    group_id = models.IntegerField('id группы в системе поставщика', blank=True, null=True)
+        return u'{}{} ({})'.format((self.depth - 1) * u'---', self.name, self.maker)
 
 
 class Status(models.Model):
 
     name = models.CharField('Статус', max_length=255)
-    status_id = models.IntegerField('id статуса в системе поставщика', blank=True, null=True)
+    code = models.IntegerField('ИД', unique=True)
 
     class Meta:
         verbose_name = 'Статус'
@@ -107,68 +96,46 @@ class Status(models.Model):
 
 class PrintType(models.Model):
 
-    name = models.CharField('Код вида нанесения', max_length=100)
-    description = models.CharField('Название вида нанесения', max_length=255)
+    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+    code = models.CharField('Код', max_length=100)
+    name = models.CharField('Название', max_length=255)
+    desc = models.CharField('Описание', max_length=1000)
 
     class Meta:
+        unique_together = ('maker', 'name')
         verbose_name = 'Вид нанесения'
         verbose_name_plural = 'Виды нанесения'
 
     def __unicode__(self):
-        return self.description
-
-
-# class FilterType(models.Model):
-#
-#     filter_type_id = models.CharField(u'id типа фильтра в системе поставщика', max_length=50)
-#     filter_type_name = models.CharField(u'Название типа фильтра', max_length=255)
-#
-#
-# class Filter(models.Model):
-#
-#     filter_id = models.CharField(u'id фильтра в системе поставщика', max_length=50)
-#     filter_name = models.CharField(u'Название фильтра', max_length=50)
-#     filter_type = models.ForeignKey(FilterType)
-
-
-class Stock(models.Model):
-
-    # product_id = models.CharField(u'id товара в системе поставщика', max_length=50)
-    # code = models.CharField(u'Артикул', max_length=50)
-    amount = models.IntegerField('Всего на складе')
-
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
-
-    # free = models.IntegerField(u'Доступно для резервирования')
-    # inwayamount = models.IntegerField(u'Всего в пути (поставка)')
-    # inwayfree = models.IntegerField(u'Доступно для резервирования из поставки')
-    # enduserprice = models.IntegerField(u'Цена End-User')
+        return self.name
 
 
 class Tovar(models.Model):
 
-    name = models.CharField('Заголовок', max_length=255)
-    product_id = models.CharField('id товара в системе поставщика', max_length=50)
-    categoryxml = models.ManyToManyField(CategoryXML, verbose_name='Категория для товара', blank=True, null=True)
-    slug_title = models.SlugField('Имя для ссылки', unique=False)
-    group = models.ForeignKey(Group, verbose_name='Группа товара', blank=True, null=True)
+    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+    name = models.CharField(verbose_name='Заголовок', max_length=255)
+    product_id = models.CharField(verbose_name='ИД', max_length=50)
+    slug_title = models.SlugField(verbose_name='Имя для ссылки', max_length=150,
+                                  unique=True)
+
+    code = models.CharField(verbose_name='Артикул', max_length=50)
+    content = models.TextField(verbose_name='Описание')
+    price = models.DecimalField(verbose_name='Цена', decimal_places=2, max_digits=10)
+    stock = models.IntegerField(verbose_name='Остаток', null=True, blank=True, default=None)
+
+    small_image = models.ImageField(verbose_name='Путь к файлу картинки 200х200',
+                                    blank=True, null=True)
+    big_image = models.ImageField(verbose_name='Путь к файлу картинки 280х280',
+                                  blank=True, null=True)
+    super_big_image = models.ImageField(verbose_name='Путь к файлу картинки 1000х1000',
+                                        blank=True, null=True)
+
+    brand = models.ForeignKey(Brand, verbose_name='Брэнд', blank=True, null=True)
     status = models.ForeignKey(Status, verbose_name='Статус', blank=True, null=True)
-    code = models.CharField('Артикул', max_length=50)
-    product_size = models.CharField('Размеры', max_length=200)
-    matherial = models.CharField('Материал', max_length=50)
-    small_image = models.ImageField('Путь к файлу картинки 200х200', upload_to=path_for_tovar_image, blank=True, null=True)
-    big_image = models.ImageField('Путь к файлу картинки 280х280', upload_to=path_for_tovar_image, blank=True, null=True)
-    super_big_image = models.ImageField('Путь к файлу картинки 1000х1000', upload_to=path_for_tovar_image, blank=True, null=True)
-    content = models.CharField('Описание', max_length=4000)
-    brand = models.CharField('Бренд', max_length=50)
-    weight = models.DecimalField('Вес',  decimal_places=2, max_digits=10)
-    price = models.DecimalField('Цена',  decimal_places=2, max_digits=10)
-    # filter = models.ManyToManyField(Filter, verbose_name=u'Фильтр для товара', blank=True, null=True)
-    print_type = models.ManyToManyField(PrintType, verbose_name='Нанесение для товара', blank=True, null=True)
-    maker = models.ForeignKey(Maker)
-    stock = generic.GenericRelation(Stock)
+    categoryxml = models.ManyToManyField(CategoryXML, verbose_name='Категория для товара',
+                                         blank=True, null=True)
+    print_type = models.ManyToManyField(PrintType, verbose_name='Нанесение для товара',
+                                        blank=True, null=True)
 
     def __unicode__(self):
         return self.name
@@ -185,56 +152,108 @@ class Tovar(models.Model):
         super(Tovar, self).save()
 
     class Meta:
+        unique_together = ('maker', 'code')
         ordering = ('price',)
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
 
 
+class TovarParamsPack(models.Model):
+
+    tovar = models.ForeignKey(Tovar, verbose_name='Товар')
+    pack_id = models.IntegerField(verbose_name='Порядковый номер пакета у товара', default=0)
+    abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
+    name = models.CharField(verbose_name='Имя поля', max_length=255)
+    value = models.CharField(verbose_name='Значение поля', max_length=255)
+    position = models.IntegerField(verbose_name='Порядок', null=True)
+
+    class Meta:
+        unique_together = ('tovar', 'pack_id', 'abbr')
+
+
+class TovarParamsStock(models.Model):
+
+    tovar = models.ForeignKey(Tovar, verbose_name='Товар')
+    abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
+    name = models.CharField(verbose_name='Имя поля', max_length=255)
+    value = models.CharField(verbose_name='Значение поля', max_length=255)
+    position = models.IntegerField(verbose_name='Порядок', null=True)
+
+    class Meta:
+        unique_together = ('tovar', 'abbr')
+
+
+class TovarParamsOther(models.Model):
+
+    tovar = models.ForeignKey(Tovar, verbose_name='Товар')
+    abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
+    name = models.CharField(verbose_name='Имя поля', max_length=255)
+    value = models.CharField(verbose_name='Значение поля', max_length=255)
+    position = models.IntegerField(verbose_name='Порядок', null=True)
+
+    class Meta:
+        unique_together = ('tovar', 'abbr')
+
+
 class SubTovar(models.Model):
 
-    name = models.CharField('Заголовок', max_length=255)
-    code = models.CharField('Артикул', max_length=50)
-    product_id = models.CharField('id товара в системе поставщика', max_length=50)
-    main_product_id = models.CharField('id основного товара в системе поставщика', max_length=50)
-    size_code = models.CharField('Размер', max_length=50)
-    weight = models.DecimalField('Вес', decimal_places=2, max_digits=10)
-    price = models.DecimalField('Цена', decimal_places=2, max_digits=10)
-    tovar = models.ForeignKey(Tovar)
-    maker = models.ForeignKey(Maker)
-    stock = generic.GenericRelation(Stock)
+    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+    tovar = models.ForeignKey(Tovar, verbose_name='Товар')
+
+    name = models.CharField(verbose_name='Заголовок', max_length=255)
+    code = models.CharField(verbose_name='Артикул', max_length=50)
+    product_id = models.CharField(verbose_name='ИД', max_length=50)
+    main_product_id = models.CharField(verbose_name='ИД родителя', max_length=50)
+
+    price = models.DecimalField(verbose_name='Цена', decimal_places=2, max_digits=10)
+
+    class Meta:
+        unique_together = ('maker', 'code')
 
     def get_type(self):
         return 0
 
 
-class Pack(models.Model):
+class SubTovarParamsStock(models.Model):
 
-    amount = models.IntegerField('Количество в упаковке')
-    weight = models.DecimalField('Вес упаковки', decimal_places=2, max_digits=10)
-    volume = models.DecimalField('Объем упаковки', decimal_places=2, max_digits=10)
-    sizex = models.DecimalField('Размер длина', decimal_places=1, max_digits=10)
-    sizey = models.DecimalField('Размер ширина', decimal_places=1, max_digits=10)
-    sizez = models.DecimalField('Размер высота', decimal_places=1, max_digits=10)
-    tovar = models.ForeignKey(Tovar)
+    subtovar = models.ForeignKey(SubTovar, verbose_name='Субтовар')
+    abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
+    name = models.CharField(verbose_name='Имя поля', max_length=255)
+    value = models.CharField(verbose_name='Значение поля', max_length=255)
+    position = models.IntegerField(verbose_name='Порядок', null=True)
+
+    class Meta:
+        unique_together = ('subtovar', 'abbr')
+
+
+class SubTovarParamsOther(models.Model):
+
+    subtovar = models.ForeignKey(SubTovar, verbose_name='Субтовар')
+    abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
+    name = models.CharField(verbose_name='Имя поля', max_length=255)
+    value = models.CharField(verbose_name='Значение поля', max_length=255)
+    position = models.IntegerField(verbose_name='Порядок', null=True)
+
+    class Meta:
+        unique_together = ('subtovar', 'abbr')
 
 
 class TovarAttachment(models.Model):
 
-    meaning = models.IntegerField('Тип файла')
-    file = models.FileField('URL доп.файла', upload_to=path_for_tovar_attach, blank=True, null=True)
-    image = models.ImageField('URL доп.картинки', upload_to=path_for_tovar_attach, blank=True, null=True)
-    name = models.CharField('Описание доп.файла или картинки', max_length=255)
-    tovar = models.ForeignKey(Tovar)
+    tovar = models.ForeignKey(Tovar, verbose_name='Товар')
+    meaning = models.IntegerField(verbose_name='Тип файла')
+    file = models.FileField(verbose_name='URL доп.файла', blank=True, null=True)
+    image = models.ImageField(verbose_name='URL доп.картинки', blank=True, null=True)
+    name = models.CharField(verbose_name='Описание доп.файла или картинки', max_length=255)
+
+    class Meta:
+        unique_together = ('tovar', 'name', 'meaning')
 
 
 class MSettings(models.Model):
 
-    title = models.CharField('Заголовок раздела', max_length=128)
-    content = models.TextField('Контент основной страницы раздела', blank=True, null=True)
-    contentSEO = models.TextField('Контент для SEO', blank=True, null=True)
-    metatitle = models.CharField('Заголовок для SEO', max_length=1000, blank=True, null=True)
-    metakey = models.CharField('Meta key', max_length=5000, blank=True, null=True)
-    metades = models.CharField('Meta des', max_length=5000, blank=True, null=True)
+    title = models.CharField(verbose_name='Заголовок раздела', max_length=128)
+    content = models.TextField(verbose_name='Контент основной страницы раздела', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Настройка раздела Каталог'

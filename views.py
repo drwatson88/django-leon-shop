@@ -7,10 +7,11 @@ from django.shortcuts import render_to_response, get_object_or_404
 
 from django.views.generic import ListView
 from django.views.generic.edit import FormMixin, ContextMixin
+from django.http import Http404
 
 from utils.Pagination import PageRange
 
-from models import Category, Tovar, SubTovar, Stock, Maker
+from models import Category, Tovar, SubTovar, Maker
 from forms import TovarFormFilter
 
 
@@ -155,15 +156,32 @@ def tovar_inside(request, *args, **kwargs):
     tovar_slug_title = kwargs['tovar_slug_title']
 
     """
-    По товарам работа
+    Находим главный товар
     """
-    tovar = Tovar.objects.filter(slug_title=tovar_slug_title)[0]
+    try:
+        tovar = Tovar.objects.get(slug_title=tovar_slug_title)
+    except Tovar.DoesNotExist:
+        raise Http404()
 
-    stock_current = tovar.stock.all()
-    tovar.stock_current = stock_current[0] if stock_current else stock_current
+    """
+    Берем пакет хранения из таблицы доп.параметров пакета
+    """
+    tovar.pack_current = {}
+    for pack_param in tovar.tovarparamspack_set.all()\
+            .order_by('position'):
+        tovar.pack_current.update({
+            pack_param.abbr: [pack_param.name, pack_param.value]
+        })
 
-    pack_current = tovar.pack_set.all()
-    tovar.pack_current = pack_current[0] if pack_current else pack_current
+    tovar.other = {}
+    for other_param in tovar.tovarparamsother_set.all()\
+            .order_by('position'):
+        tovar.other.update({
+            other_param.abbr: [other_param.name, other_param.value]
+        })
+    tovar.matherial = tovar.other['matherial'][1]
+    tovar.weight = tovar.other['weight'][1]
+    tovar.product_size = tovar.other['product_size'][1]
 
     tovar.image_current = tovar.super_big_image or tovar.big_image or tovar.small_image
     tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
@@ -171,8 +189,12 @@ def tovar_inside(request, *args, **kwargs):
 
     subtovars = SubTovar.objects.filter(tovar=tovar)
     for subtovar in subtovars:
-        stock_current = subtovar.stock.all()
-        subtovar.stock_current = stock_current[0] if stock_current else stock_current
+        subtovar.stock_current = {}
+        for stock_param in tovar.tovarparamspack_set.all()\
+                .order_by('position'):
+            subtovar.stock_current.update({
+                stock_param.abbr: [stock_param.name, stock_param.value]
+            })
 
     """
     По категориям работа для sidebara

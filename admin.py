@@ -3,9 +3,8 @@
 from django.contrib import admin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
-from models import  Category, CategoryXML, SubTovar, Tovar, Status, Group, \
+from models import Category, CategoryXML, SubTovar, Tovar, Status, \
                     PrintType, TovarAttachment, Maker
-
 
 
 class StatusAdmin(admin.ModelAdmin):
@@ -24,7 +23,7 @@ admin.site.register(Maker, MakerAdmin)
 
 class CategoryXMLAdmin(TreeAdmin):
 
-    pass
+    form = movenodeform_factory(Category)
 
 admin.site.register(CategoryXML, CategoryXMLAdmin)
 
