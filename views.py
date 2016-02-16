@@ -61,7 +61,6 @@ class CatalogView(FormMixin, ListView):
     context_object_name = 'obj_list'
     paginate_by = 30
 
-
     def get_context_data(self, **kwargs):
         cd = super(CatalogView, self).get_context_data(**kwargs)
         cd['page_range'] = PageRange(
@@ -90,12 +89,10 @@ class CatalogView(FormMixin, ListView):
         self.form = self.get_form(form_class)
         return super(CatalogView, self).get(request, *args, **kwargs)
 
-
     def post(self, request, *args, **kwargs):
         form_class = self.get_form_class()
         self.form = self.get_form(form_class)
         return super(CatalogView, self).get(request, *args, **kwargs)
-
 
     def get_queryset(self):
 
@@ -104,7 +101,8 @@ class CatalogView(FormMixin, ListView):
 
         catalog_slug_title = self.kwargs['catalog_slug_title']
         self.categorys = Category.get_root_nodes()
-        self.current_category = Category.objects.filter(slug_title=catalog_slug_title)[0]
+        self.current_category = Category.objects.filter(slug_title=
+                                                        catalog_slug_title)[0]
 
         #TODO: сделать обработку исключения и выход на 404 при отсутсвии категории
         self.parent_category = self.current_category.get_parent()
@@ -114,7 +112,8 @@ class CatalogView(FormMixin, ListView):
         else:
             self.parent_category.selected = False
 
-        categorys_xml = list(self.current_category.categorys_xml.all().values_list('id'))
+        categorys_xml = list(self.current_category.categorys_xml.all().
+                             values_list('id'))
         self.childrens_categorys = self.parent_category.getchildrens()
         for cat in self.childrens_categorys:
             if self.parent_category.id == self.current_category.id:
@@ -125,7 +124,7 @@ class CatalogView(FormMixin, ListView):
         form_lst = ['makers', 'price_fr', 'price_to']
 
         fpage = True
-        post = True if self.request.method=='POST' else False
+        post = True if self.request.method == 'POST' else False
         for p in form_lst:
             try:
                 obj_numb = self.request.POST.get(p, '')
@@ -183,7 +182,8 @@ def tovar_inside(request, *args, **kwargs):
     # tovar.weight = tovar.other['weight'][1]
     # tovar.product_size = tovar.other['product_size'][1]
 
-    tovar.image_current = tovar.super_big_image or tovar.big_image or tovar.small_image
+    tovar.image_current = tovar.super_big_image or tovar.big_image \
+                          or tovar.small_image
     tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
     tovar.attach_files = tovar.tovarattachment_set.filter(meaning=0)
 
@@ -200,7 +200,8 @@ def tovar_inside(request, *args, **kwargs):
     По категориям работа для sidebara
     """
     categorys_xml = tovar.categoryxml.all()
-    path_categorys = [cat_xml.category for cat_xml in categorys_xml if cat_xml.category is not None]
+    path_categorys = [cat_xml.category for cat_xml in categorys_xml
+                      if cat_xml.category is not None]
     current_category = path_categorys[0]
 
     categorys = Category.get_root_nodes()
