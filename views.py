@@ -179,9 +179,9 @@ def tovar_inside(request, *args, **kwargs):
         tovar.other.update({
             other_param.abbr: [other_param.name, other_param.value]
         })
-    tovar.matherial = tovar.other['matherial'][1]
-    tovar.weight = tovar.other['weight'][1]
-    tovar.product_size = tovar.other['product_size'][1]
+    # tovar.matherial = tovar.other['matherial'][1]
+    # tovar.weight = tovar.other['weight'][1]
+    # tovar.product_size = tovar.other['product_size'][1]
 
     tovar.image_current = tovar.super_big_image or tovar.big_image or tovar.small_image
     tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
