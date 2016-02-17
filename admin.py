@@ -23,8 +23,7 @@ admin.site.register(Maker, MakerAdmin)
 
 
 class CategoryXMLAdmin(TreeAdmin):
-
-    # list_display = ('name', )
+    list_display = ('name', 'maker', 'cat_id', 'category')
     list_filter = ('status', 'maker', )
     search_fields = ('name',)
 
@@ -104,22 +103,8 @@ class TovarAdmin(admin.ModelAdmin):
 admin.site.register(Tovar, TovarAdmin)
 
 
-class SubTovarAdmin(admin.ModelAdmin):
-
-    pass
-
-admin.site.register(SubTovar, SubTovarAdmin)
-
-
 class PrintTypeAdmin(admin.ModelAdmin):
 
     pass
 
 admin.site.register(PrintType, PrintTypeAdmin)
-
-
-class TovarAttachmentAdmin(admin.ModelAdmin):
-
-    pass
-
-admin.site.register(TovarAttachment, TovarAttachmentAdmin)

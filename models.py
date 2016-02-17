@@ -61,8 +61,8 @@ class Category(MP_Node):
         super(Category, self).save(**kwargs)
 
     class Meta:
-        verbose_name = 'Категорию'
-        verbose_name_plural = 'Категории'
+        verbose_name = 'Категория на сайте'
+        verbose_name_plural = 'Категории на сайте'
 
     def __unicode__(self):
         return u'{}{}'.format((self.depth - 1) * u'---', self.name)
@@ -79,7 +79,7 @@ class CategoryXML(MP_Node):
 
     class Meta:
         unique_together = ('maker', 'cat_id')
-        verbose_name = 'Категорию от поставщика'
+        verbose_name = 'Категория от поставщика'
         verbose_name_plural = 'Категории от поставщиков'
 
     def __unicode__(self):
