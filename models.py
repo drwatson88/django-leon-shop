@@ -138,10 +138,8 @@ class Tovar(models.Model):
 
     brand = models.ForeignKey(Brand, verbose_name='Брэнд', blank=True, null=True)
     status = models.ForeignKey(Status, verbose_name='Статус', blank=True, null=True)
-    categoryxml = models.ManyToManyField(CategoryXML, verbose_name='Категория для товара',
-                                         blank=True, null=True)
-    print_type = models.ManyToManyField(PrintType, verbose_name='Нанесение для товара',
-                                        blank=True, null=True)
+    categoryxml = models.ManyToManyField(CategoryXML, verbose_name='Категория для товара', blank=True)
+    print_type = models.ManyToManyField(PrintType, verbose_name='Нанесение для товара', blank=True)
     show = models.BooleanField(verbose_name='Показывать', default=True)
 
     content_seo = models.TextField(verbose_name='Описание для SEO', blank=True, null=True)
