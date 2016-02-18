@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.contrib import admin
+from admin_filters import DecadeBornListFilter
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 from settings import MEDIA_URL
@@ -24,7 +25,7 @@ admin.site.register(Maker, MakerAdmin)
 
 class CategoryXMLAdmin(TreeAdmin):
     list_display = ('name', 'maker', 'cat_id', 'category')
-    list_filter = ('status', 'maker', )
+    list_filter = ('status', 'maker', DecadeBornListFilter, )
     search_fields = ('name',)
 
     form = movenodeform_factory(Category)
