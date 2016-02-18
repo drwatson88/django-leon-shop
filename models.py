@@ -18,7 +18,7 @@ class Maker(models.Model):
         verbose_name_plural = 'Поставщики'
 
     def __unicode__(self):
-        return self.name
+        return self.official
 
 
 class Brand(models.Model):
