@@ -48,7 +48,8 @@ class Category(MP_Node):
     position = models.IntegerField(verbose_name='Позиция', blank=True, null=True)
 
     content_seo = models.TextField(verbose_name='Описание для SEO', blank=True, null=True)
-    title_seo = models.CharField(verbose_name='Заголовок для SEO', max_length=255, blank=True, null=True)
+    title_seo = models.CharField(verbose_name='Заголовок для SEO', max_length=255, blank=True,
+                                 null=True)
     metakey = models.CharField(verbose_name='Meta key', max_length=255, blank=True, null=True)
     metades = models.CharField(verbose_name='Meta des', max_length=255, blank=True, null=True)
 
@@ -96,7 +97,7 @@ class Status(models.Model):
         verbose_name_plural = 'Статусы'
 
     def __unicode__(self):
-        return self.name
+        return self.official
 
 
 class PrintType(models.Model):
