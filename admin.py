@@ -67,6 +67,12 @@ class CategoryAdmin(TreeAdmin):
 admin.site.register(Category, CategoryAdmin)
 
 
+class SubTovarInline(admin.StackedInline):
+    model = SubTovar
+    fields = ('tovar', 'name', 'params', 'price')
+    extra = 1
+
+
 class TovarAdmin(admin.ModelAdmin):
 
     list_display = ('name', 'icon', 'show', )
@@ -74,9 +80,9 @@ class TovarAdmin(admin.ModelAdmin):
     search_fields = ('name', 'content', 'code',)
     # list_editable = ('position',)
     # filter_horizontal = ('categoryxml',)
-    # inlines = [
-    #       PhotosInline,VariantsInline,
-    # ]
+    inlines = [
+        SubTovarInline
+    ]
 
     class Media:
 
@@ -93,13 +99,14 @@ class TovarAdmin(admin.ModelAdmin):
             try:
                 im = get_thumbnail(obj.small_image, '60x60', crop='center', quality=99)
                 return '<img src="{}" border="0" alt=""  align="center" />'.format(im.url, obj.name)
-            except :
+            except:
                 return '<img src="" border="0" alt="" width="60" height="60" align="center" />'
 
     icon.short_description = 'Миниатюра'
     icon.allow_tags = True
     icon.admin_order_field = 'name'
-    prepopulated_fields = {'slug_title': ('name', )}
+    prepopulated_fields = {'code': ('name',),
+                           'slug_title': ('name',)}
 
 admin.site.register(Tovar, TovarAdmin)
 
