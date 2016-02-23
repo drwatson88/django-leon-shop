@@ -6,7 +6,7 @@ from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 from settings import MEDIA_URL
 from models import Category, CategoryXML, SubTovar, Tovar, Status, \
-                    PrintType, TovarAttachment, Maker
+    PrintType, TovarAttachment, Maker, Brand
 
 
 class StatusAdmin(admin.ModelAdmin):
@@ -23,12 +23,20 @@ class MakerAdmin(admin.ModelAdmin):
 admin.site.register(Maker, MakerAdmin)
 
 
+class BrandAdmin(admin.ModelAdmin):
+    list_display = ('maker', 'name',)
+
+
+admin.site.register(Brand, MakerAdmin)
+
+
 class CategoryXMLAdmin(TreeAdmin):
-    list_display = ('name', 'maker', 'cat_id', 'category')
+    list_display = ('name', 'maker', 'category')
     list_filter = ('status', 'maker', CategoryListFilter,)
     search_fields = ('name',)
 
-    form = movenodeform_factory(Category)
+    form = movenodeform_factory(Category, exclude=('cat_id',
+                                                   'import_fl',))
 
 admin.site.register(CategoryXML, CategoryXMLAdmin)
 
@@ -69,7 +77,7 @@ admin.site.register(Category, CategoryAdmin)
 
 class SubTovarInline(admin.StackedInline):
     model = SubTovar
-    fields = ('tovar', 'name', 'params', 'price')
+    fields = ('tovar', 'name', 'params', 'stock', 'price')
     extra = 1
 
 
@@ -78,6 +86,7 @@ class TovarAdmin(admin.ModelAdmin):
     list_display = ('name', 'icon', 'show', )
     list_filter = ('show', 'status', 'maker', CategoryXMLListFilter)
     search_fields = ('name', 'content', 'code',)
+    exclude = ('product_id', 'import_fl',)
     # list_editable = ('position',)
     # filter_horizontal = ('categoryxml',)
     inlines = [

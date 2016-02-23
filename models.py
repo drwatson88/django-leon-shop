@@ -26,7 +26,7 @@ class Brand(models.Model):
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     name = models.CharField(verbose_name='Наименование', max_length=255, blank=True)
     code = models.CharField(verbose_name='Код', max_length=255, blank=True)
-    brand_id = models.CharField(verbose_name='ИД', max_length=255)
+    brand_id = models.CharField(verbose_name='ИД', max_length=255, blank=True)
 
     class Meta:
         unique_together = ('maker', 'name')
@@ -70,18 +70,26 @@ class Category(MP_Node):
 
 
 class CategoryXML(MP_Node):
+    def default_cat_id(self):
+        return hashlib.md5(slugify(self.name)).hexdigest()
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
-    name = models.CharField(verbose_name='Заголовок', max_length=255)
+    name = models.CharField(verbose_name='Заголовок', max_length=255, blank=False)
     cat_id = models.CharField(verbose_name='ИД', max_length=100)
     category = models.ForeignKey(Category, verbose_name='Категория на сайте',
                                  blank=True, null=True, related_name='categorys_xml')
     status = models.ForeignKey('Status', verbose_name='Статус', blank=True, null=True)
+    import_fl = models.BooleanField(verbose_name='Импортирован в базу', default=False)
 
     class Meta:
         unique_together = ('maker', 'cat_id')
         verbose_name = 'Категория от поставщика'
         verbose_name_plural = 'Категории от поставщиков'
+
+    def save(self, **kwargs):
+        if not self.id and not self.import_fl:
+            self.cat_id = self.default_cat_id()
+        super(CategoryXML, self).save()
 
     def __unicode__(self):
         return u'{}{} ({})'.format((self.depth - 1) * u'---', self.name, self.maker)
@@ -168,7 +176,7 @@ class Tovar(models.Model):
         return 1
 
     def save(self, **kwargs):
-        if not self.id:
+        if not self.id and not self.import_fl:
             self.code = self.default_code()
             self.slug_title = self.default_slug_title()
         super(Tovar, self).save()
