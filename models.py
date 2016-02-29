@@ -9,6 +9,7 @@ import hashlib
 
 
 class Maker(models.Model):
+
     name = models.CharField(verbose_name='Поставщик', max_length=255, unique=True)
     official = models.CharField(verbose_name='Наименование поставщика', max_length=255)
 
@@ -70,6 +71,7 @@ class Category(MP_Node):
 
 
 class CategoryXML(MP_Node):
+
     def default_cat_id(self):
         return hashlib.md5(slugify(self.name)).hexdigest()
 
@@ -294,16 +296,35 @@ class SubTovarParamsOther(models.Model):
 
 
 class TovarAttachment(models.Model):
+    def upload_path(self, path):
+        return os.path.join('upload_attachment', self.maker.name, '{}{}'.
+                            format(hashlib.md5(slugify(self.name)).hexdigest(), '.jpg'))
+
+    MEANINGS = (
+        (0, 'Изображение'),
+        (1, 'Файл')
+    )
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     tovar = models.ForeignKey(Tovar, verbose_name='Товар')
-    meaning = models.IntegerField(verbose_name='Тип файла')
-    file = models.FileField(verbose_name='URL доп.файла', blank=True, null=True)
-    image = models.ImageField(verbose_name='URL доп.картинки', blank=True, null=True)
+    meaning = models.IntegerField(verbose_name='Тип файла', choices=MEANINGS)
+    file = models.FileField(verbose_name='URL доп.файла', upload_to=upload_path,
+                            blank=True)
+    image = models.ImageField(verbose_name='URL доп.картинки', upload_to=upload_path,
+                              blank=True)
     name = models.CharField(verbose_name='Описание доп.файла или картинки', max_length=255)
+
+    def save(self, **kwargs):
+        self.maker = self.tovar.maker
+        super(TovarAttachment, self).save()
 
     class Meta:
         unique_together = ('tovar', 'image', 'file')
+        verbose_name = 'Дополнительный файл (изображение)'
+        verbose_name_plural = 'Дополнительные файлы (изображения)'
+
+    def __unicode__(self):
+        return self.name
 
 
 class MSettings(models.Model):

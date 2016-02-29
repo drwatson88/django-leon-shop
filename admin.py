@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.contrib import admin
+
 from admin_filters import CategoryListFilter, CategoryXMLListFilter
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
@@ -81,6 +82,12 @@ class SubTovarInline(admin.StackedInline):
     extra = 1
 
 
+class TovarAttachmentInline(admin.StackedInline):
+    model = TovarAttachment
+    fields = ('tovar', 'name', 'meaning', 'image', 'file')
+    extra = 1
+
+
 class TovarAdmin(admin.ModelAdmin):
 
     list_display = ('name', 'icon', 'show', )
@@ -90,15 +97,13 @@ class TovarAdmin(admin.ModelAdmin):
     # list_editable = ('position',)
     filter_horizontal = ('categoryxml', 'print_type')
     inlines = [
-        SubTovarInline
+        TovarAttachmentInline, SubTovarInline
     ]
 
-    class Media:
-
-        js = [
-            '/static/grappelli/tinymce/jscripts/tiny_mce/tiny_mce.js',
-            '/static/grappelli/tinymce_setup/tinymce_setup.js',
-        ]
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        if db_field.name == 'categoryxml':
+            kwargs['queryset'] = CategoryXML.objects.filter(maker=request.maker)
+        return super(TovarAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
     def icon(self, obj):
 
@@ -116,6 +121,13 @@ class TovarAdmin(admin.ModelAdmin):
     icon.admin_order_field = 'name'
     prepopulated_fields = {'code': ('name',),
                            'slug_title': ('name',)}
+
+    class Media:
+
+        js = [
+            '/static/grappelli/tinymce/jscripts/tiny_mce/tiny_mce.js',
+            '/static/grappelli/tinymce_setup/tinymce_setup.js',
+        ]
 
 admin.site.register(Tovar, TovarAdmin)
 
