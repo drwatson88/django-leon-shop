@@ -88,7 +88,7 @@ class TovarAdmin(admin.ModelAdmin):
     search_fields = ('name', 'content', 'code',)
     exclude = ('product_id', 'import_fl',)
     # list_editable = ('position',)
-    # filter_horizontal = ('categoryxml',)
+    filter_horizontal = ('categoryxml', 'print_type')
     inlines = [
         SubTovarInline
     ]
