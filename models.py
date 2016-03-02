@@ -3,6 +3,7 @@
 import os
 
 from django.db import models
+from smart_selects.db_fields import ChainedForeignKey
 from treebeard.mp_tree import MP_Node
 from pytils.translit import slugify
 import hashlib
@@ -157,8 +158,14 @@ class Tovar(models.Model):
                                   blank=True, max_length=255, upload_to=upload_path)
     super_big_image = models.ImageField(verbose_name='Путь к файлу картинки 1000х1000',
                                         blank=True, max_length=255, upload_to=upload_path)
-
-    brand = models.ForeignKey(Brand, verbose_name='Брэнд', blank=True, null=True)
+    brand = ChainedForeignKey(Brand,
+                              chained_field='maker',
+                              chained_model_field='maker',
+                              show_all=False,
+                              auto_choose=False,
+                              verbose_name='Брэнд',
+                              blank=True,
+                              null=True)
     status = models.ForeignKey(Status, verbose_name='Статус', blank=True, null=True)
     categoryxml = models.ManyToManyField(CategoryXML, verbose_name=u'Категория для товара', blank=True)
     print_type = models.ManyToManyField(PrintType, verbose_name=u'Нанесение для товара', blank=True)
