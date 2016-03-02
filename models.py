@@ -24,19 +24,37 @@ class Maker(models.Model):
 
 
 class Brand(models.Model):
+    name = models.CharField(verbose_name='Бренд', max_length=255, unique=True)
+    official = models.CharField(verbose_name='Наименование бренда', max_length=255)
+
+    def save(self, **kwargs):
+        if not self.id:
+            self.official = slugify(self.name)
+        super(Brand, self).save(**kwargs)
+
+    class Meta:
+        verbose_name = 'Бренд на сайте'
+        verbose_name_plural = 'Бренд на сайте'
+
+    def __unicode__(self):
+        return self.official
+
+
+class BrandMaker(models.Model):
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     name = models.CharField(verbose_name='Наименование', max_length=255, blank=True)
     code = models.CharField(verbose_name='Код', max_length=255, blank=True)
-    brand_id = models.CharField(verbose_name='ИД', max_length=255, blank=True)
+    brand = models.ForeignKey(Brand, verbose_name='Бренд на сайте')
+    prov_brand_id = models.CharField(verbose_name='ИД', max_length=255, blank=True)
 
     class Meta:
         unique_together = ('maker', 'name')
-        verbose_name = 'Брэнд'
-        verbose_name_plural = 'Брэнды'
+        verbose_name = 'Брэнд от поставщика'
+        verbose_name_plural = 'Брэнды от поставщика'
 
     def __unicode__(self):
-        return self.name
+        return u'{} ({})'.format(self.name, self.maker)
 
 
 class Category(MP_Node):
@@ -124,7 +142,7 @@ class PrintType(models.Model):
         verbose_name_plural = 'Виды нанесения'
 
     def __unicode__(self):
-        return self.name
+        return u'{} ({})'.format(self.name, self.maker)
 
 
 class Tovar(models.Model):
@@ -158,7 +176,7 @@ class Tovar(models.Model):
                                   blank=True, max_length=255, upload_to=upload_path)
     super_big_image = models.ImageField(verbose_name='Путь к файлу картинки 1000х1000',
                                         blank=True, max_length=255, upload_to=upload_path)
-    brand = ChainedForeignKey(Brand,
+    brand = ChainedForeignKey(BrandMaker,
                               chained_field='maker',
                               chained_model_field='maker',
                               show_all=False,
