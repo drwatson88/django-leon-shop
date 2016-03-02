@@ -100,11 +100,6 @@ class TovarAdmin(admin.ModelAdmin):
         TovarAttachmentInline, SubTovarInline
     ]
 
-    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
-        if db_field.name == 'categoryxml':
-            kwargs['queryset'] = CategoryXML.objects.filter(maker=request.maker)
-        return super(TovarAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
-
     def icon(self, obj):
 
         if obj.small_image:
