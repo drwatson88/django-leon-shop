@@ -2,12 +2,16 @@
 
 from django.contrib import admin
 
-from admin_filters import CategoryListFilter, CategoryXMLListFilter
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
-from settings import MEDIA_URL
+
+from admin_filters import CategoryListFilter, CategoryXMLListFilter, \
+    BrandListFilter, BrandMakerListFilter, PrintTypeListFilter, \
+    PrintTypeMakerListFilter
+from admin_actions import tovar_add_categoryxml, tovar_add_print_type, \
+    tovar_clear_categoryxmls, tovar_clear_print_types
 from models import Category, CategoryXML, SubTovar, Tovar, Status, \
-    PrintType, TovarAttachment, Maker, Brand
+    PrintTypeMaker, PrintType, TovarAttachment, Maker, Brand, BrandMaker
 
 
 class StatusAdmin(admin.ModelAdmin):
@@ -24,11 +28,20 @@ class MakerAdmin(admin.ModelAdmin):
 admin.site.register(Maker, MakerAdmin)
 
 
+class BrandMakerAdmin(admin.ModelAdmin):
+    list_display = ('name', 'maker', 'brand')
+    fields = ('name', 'maker', 'brand',)
+    list_filter = ('maker', BrandListFilter)
+    search_fields = ('name',)
+
+admin.site.register(BrandMaker, BrandMakerAdmin)
+
+
 class BrandAdmin(admin.ModelAdmin):
-    list_display = ('maker', 'name',)
+    list_display = ('official',)
+    search_fields = ('official',)
 
-
-admin.site.register(Brand, MakerAdmin)
+admin.site.register(Brand, BrandAdmin)
 
 
 class CategoryXMLAdmin(TreeAdmin):
@@ -89,10 +102,14 @@ class TovarAttachmentInline(admin.StackedInline):
 
 
 class TovarAdmin(admin.ModelAdmin):
-
-    list_display = ('name', 'icon', 'show', )
-    list_filter = ('show', 'status', 'maker', CategoryXMLListFilter)
+    list_display = ('name', 'maker', 'icon', 'show',)
+    list_filter = ('show', 'status', 'maker',
+                   CategoryXMLListFilter,
+                   BrandMakerListFilter,
+                   PrintTypeMakerListFilter)
     search_fields = ('name', 'content', 'code',)
+    actions = [tovar_add_categoryxml, tovar_add_print_type,
+               tovar_clear_categoryxmls, tovar_clear_print_types]
     exclude = ('product_id', 'import_fl',)
     # list_editable = ('position',)
     filter_horizontal = ('categoryxml', 'print_type')
@@ -128,7 +145,16 @@ admin.site.register(Tovar, TovarAdmin)
 
 
 class PrintTypeAdmin(admin.ModelAdmin):
-
-    pass
+    list_display = ('official',)
+    search_fields = ('official',)
 
 admin.site.register(PrintType, PrintTypeAdmin)
+
+
+class PrintTypeMakerAdmin(admin.ModelAdmin):
+    list_display = ('name', 'maker', 'print_type')
+    fields = ('name', 'maker', 'print_type',)
+    list_filter = ('maker', PrintTypeListFilter)
+    search_fields = ('name',)
+
+admin.site.register(PrintTypeMaker, PrintTypeMakerAdmin)

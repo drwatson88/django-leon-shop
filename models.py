@@ -9,10 +9,25 @@ from pytils.translit import slugify
 import hashlib
 
 
+def tovar_upload_path(obj):
+    return os.path.join('upload_tovar', obj.maker.name, '{}{}'.
+                        format(hashlib.md5(slugify(obj.name)).hexdigest(), '.jpg'))
+
+
+def tovar_attachment_upload_path(obj):
+    return os.path.join('upload_attachment', obj.maker.name, '{}{}'.
+                        format(hashlib.md5(slugify(obj.name)).hexdigest(), '.jpg'))
+
+
 class Maker(models.Model):
 
     name = models.CharField(verbose_name='Поставщик', max_length=255, unique=True)
     official = models.CharField(verbose_name='Наименование поставщика', max_length=255)
+
+    def save(self, **kwargs):
+        if not self.id:
+            self.name = slugify(self.official)
+        super(Maker, self).save(**kwargs)
 
     class Meta:
 
@@ -29,7 +44,7 @@ class Brand(models.Model):
 
     def save(self, **kwargs):
         if not self.id:
-            self.official = slugify(self.name)
+            self.name = slugify(self.official)
         super(Brand, self).save(**kwargs)
 
     class Meta:
@@ -45,7 +60,7 @@ class BrandMaker(models.Model):
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     name = models.CharField(verbose_name='Наименование', max_length=255, blank=True)
     code = models.CharField(verbose_name='Код', max_length=255, blank=True)
-    brand = models.ForeignKey(Brand, verbose_name='Бренд на сайте')
+    brand = models.ForeignKey(Brand, verbose_name='Бренд на сайте', null=True, blank=True)
     prov_brand_id = models.CharField(verbose_name='ИД', max_length=255, blank=True)
 
     class Meta:
@@ -125,31 +140,51 @@ class Status(models.Model):
         verbose_name = 'Статус'
         verbose_name_plural = 'Статусы'
 
+    def save(self, **kwargs):
+        if not self.id:
+            self.name = slugify(self.official)
+        super(Status, self).save(**kwargs)
+
     def __unicode__(self):
         return self.official
 
 
 class PrintType(models.Model):
+    name = models.CharField(verbose_name='Вид нанесения', max_length=255, unique=True)
+    official = models.CharField(verbose_name='Наименование вида нанесения', max_length=255)
+
+    def save(self, **kwargs):
+        if not self.id:
+            self.name = slugify(self.official)
+        super(PrintType, self).save(**kwargs)
+
+    class Meta:
+        verbose_name = 'Вид нанесения на сайте'
+        verbose_name_plural = 'Виды нанесения на сайте'
+
+    def __unicode__(self):
+        return self.official
+
+
+class PrintTypeMaker(models.Model):
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     code = models.CharField(verbose_name='Код', max_length=100)
     name = models.CharField(verbose_name='Название', max_length=255)
     desc = models.CharField(verbose_name='Описание', max_length=1000)
+    print_type = models.ForeignKey(PrintType, verbose_name='Вид нанесения на сайте',
+                                   null=True, blank=True)
 
     class Meta:
         unique_together = ('maker', 'name')
-        verbose_name = 'Вид нанесения'
-        verbose_name_plural = 'Виды нанесения'
+        verbose_name = 'Вид нанесения от поставщика'
+        verbose_name_plural = 'Виды нанесения от поставщика'
 
     def __unicode__(self):
         return u'{} ({})'.format(self.name, self.maker)
 
 
 class Tovar(models.Model):
-
-    def upload_path(self, path):
-        return os.path.join('upload_tovar', self.maker.name, '{}{}'.
-                            format(hashlib.md5(slugify(self.name)).hexdigest(), '.jpg'))
 
     def default_slug_title(self):
         return slugify(u'{}_{}_{}'.format(self.maker, self.name, self.code))[:255]
@@ -171,22 +206,24 @@ class Tovar(models.Model):
     material = models.CharField(verbose_name='Материал', max_length=128, blank=True)
 
     small_image = models.ImageField(verbose_name='Путь к файлу картинки 200х200',
-                                    blank=True, max_length=255, upload_to=upload_path)
+                                    blank=True, max_length=255, upload_to=tovar_upload_path)
     big_image = models.ImageField(verbose_name='Путь к файлу картинки 280х280',
-                                  blank=True, max_length=255, upload_to=upload_path)
+                                  blank=True, max_length=255, upload_to=tovar_upload_path)
     super_big_image = models.ImageField(verbose_name='Путь к файлу картинки 1000х1000',
-                                        blank=True, max_length=255, upload_to=upload_path)
+                                        blank=True, max_length=255, upload_to=tovar_upload_path)
     brand = ChainedForeignKey(BrandMaker,
                               chained_field='maker',
                               chained_model_field='maker',
                               show_all=False,
                               auto_choose=False,
-                              verbose_name='Брэнд',
+                              verbose_name='Бренд от поставщика',
                               blank=True,
                               null=True)
     status = models.ForeignKey(Status, verbose_name='Статус', blank=True, null=True)
-    categoryxml = models.ManyToManyField(CategoryXML, verbose_name=u'Категория для товара', blank=True)
-    print_type = models.ManyToManyField(PrintType, verbose_name=u'Нанесение для товара', blank=True)
+    categoryxml = models.ManyToManyField(CategoryXML, verbose_name=u'Категория для товара',
+                                         blank=True)
+    print_type = models.ManyToManyField(PrintTypeMaker, verbose_name=u'Вид нанесения от поставщика',
+                                        blank=True)
     show = models.BooleanField(verbose_name='Показывать', default=True)
 
     content_seo = models.TextField(verbose_name='Описание для SEO', blank=True)
@@ -321,9 +358,6 @@ class SubTovarParamsOther(models.Model):
 
 
 class TovarAttachment(models.Model):
-    def upload_path(self, path):
-        return os.path.join('upload_attachment', self.maker.name, '{}{}'.
-                            format(hashlib.md5(slugify(self.name)).hexdigest(), '.jpg'))
 
     MEANINGS = (
         (0, 'Изображение'),
@@ -333,9 +367,9 @@ class TovarAttachment(models.Model):
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     tovar = models.ForeignKey(Tovar, verbose_name='Товар')
     meaning = models.IntegerField(verbose_name='Тип файла', choices=MEANINGS)
-    file = models.FileField(verbose_name='URL доп.файла', upload_to=upload_path,
+    file = models.FileField(verbose_name='URL доп.файла', upload_to=tovar_attachment_upload_path,
                             blank=True)
-    image = models.ImageField(verbose_name='URL доп.картинки', upload_to=upload_path,
+    image = models.ImageField(verbose_name='URL доп.картинки', upload_to=tovar_attachment_upload_path,
                               blank=True)
     name = models.CharField(verbose_name='Описание доп.файла или картинки', max_length=255)
 
