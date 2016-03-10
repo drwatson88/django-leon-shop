@@ -2,7 +2,9 @@
 
 
 from admin_forms import ChangeTovarCategoryXMLForm, ChangeTovarPrintTypeForm, \
-    ChangeCategoryXMLCategoryForm, ChangeBrandMakerBrandForm, ChangePrintTypeMakerPrintTypeForm
+    ChangeCategoryXMLCategoryForm, ChangeBrandMakerBrandForm, \
+    ChangePrintTypeMakerPrintTypeForm, ChangeCategoryXMLMakerForm, \
+    ChangeTovarBrandForm, ChangeTovarMakerForm, ChangeTovarStatusForm
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.contrib import admin
@@ -37,14 +39,12 @@ def tovar_add_categoryxml(modeladmin, request, queryset):
                                                                           'title': 'Добавление категории '
                                                                                    'от поставщика'})
 
-
 tovar_add_categoryxml.short_description = 'Добавить КАТЕГОРИЮ ОТ ПОСТАВЩИКА'
 
 
 def tovar_clear_categoryxmls(modeladmin, request, queryset):
     for item in queryset:
         item.categoryxml.clear()
-
 
 tovar_clear_categoryxmls.short_description = 'Очистить поле КАТЕГОРИИ ОТ ПОСТАВЩИКА'
 
@@ -78,7 +78,6 @@ def tovar_add_print_type(modeladmin, request, queryset):
                                                                          'title': 'Добавить вид нанесения '
                                                                                   'от поставщика'})
 
-
 tovar_add_print_type.short_description = 'Добавить ВИД НАНЕСЕНИЯ ОТ ПОСТАВЩИКА'
 
 
@@ -86,8 +85,128 @@ def tovar_clear_print_types(modeladmin, request, queryset):
     for item in queryset:
         item.print_type.clear()
 
-
 tovar_clear_print_types.short_description = 'Очистить поле ВИДЫ НАНЕСЕНИЯ ОТ ПОСТАВЩИКА'
+
+
+def tovar_add_brand(modeladmin, request, queryset):
+    form = None
+
+    if 'apply' in request.POST:
+        form = ChangeTovarBrandForm(request.POST)
+
+        if form.is_valid():
+            brand = form.cleaned_data['brand']
+
+            count = 0
+            for item in queryset:
+                item.brand = brand
+                item.save()
+                count += 1
+
+            modeladmin.message_user(request, 'Бренд от поставщика {} '
+                                             'применен к {} товарам.'.
+                                    format(brand, count))
+            return HttpResponseRedirect(request.get_full_path())
+
+    if not form:
+        form = ChangeTovarBrandForm(initial={'_selected_action': request.
+                                    POST.getlist(admin.ACTION_CHECKBOX_NAME)})
+
+    return render(request, 'catalog/actions/tovar_add_brand.html', {'items': queryset,
+                                                                    'form': form,
+                                                                    'title': 'Добавить бренд '
+                                                                             'от поставщика'})
+
+
+tovar_add_brand.short_description = 'Добавить БРЕНД ОТ ПОСТАВЩИКА'
+
+
+def tovar_clear_brand(modeladmin, request, queryset):
+    for item in queryset:
+        item.brand.clear()
+
+
+tovar_clear_brand.short_description = 'Очистить поле БРЕНД ОТ ПОСТАВЩИКА'
+
+
+def tovar_add_status(modeladmin, request, queryset):
+    form = None
+
+    if 'apply' in request.POST:
+        form = ChangeTovarStatusForm(request.POST)
+
+        if form.is_valid():
+            status = form.cleaned_data['status']
+
+            count = 0
+            for item in queryset:
+                item.status = status
+                item.save()
+                count += 1
+
+            modeladmin.message_user(request, 'Статус {} '
+                                             'применен к {} товарам.'.
+                                    format(status, count))
+            return HttpResponseRedirect(request.get_full_path())
+
+    if not form:
+        form = ChangeTovarStatusForm(initial={'_selected_action': request.
+                                     POST.getlist(admin.ACTION_CHECKBOX_NAME)})
+
+    return render(request, 'catalog/actions/tovar_add_status.html', {'items': queryset,
+                                                                     'form': form,
+                                                                     'title': 'Добавить статус'})
+
+
+tovar_add_status.short_description = 'Добавить СТАТУС'
+
+
+def tovar_clear_status(modeladmin, request, queryset):
+    for item in queryset:
+        item.status.clear()
+
+
+tovar_clear_status.short_description = 'Очистить поле СТАТУС'
+
+
+def tovar_add_maker(modeladmin, request, queryset):
+    form = None
+
+    if 'apply' in request.POST:
+        form = ChangeTovarMakerForm(request.POST)
+
+        if form.is_valid():
+            maker = form.cleaned_data['maker']
+
+            count = 0
+            for item in queryset:
+                item.maker = maker
+                item.save()
+                count += 1
+
+            modeladmin.message_user(request, 'Поставщик {} '
+                                             'применен к {} товарам.'.
+                                    format(maker, count))
+            return HttpResponseRedirect(request.get_full_path())
+
+    if not form:
+        form = ChangeTovarMakerForm(initial={'_selected_action': request.
+                                    POST.getlist(admin.ACTION_CHECKBOX_NAME)})
+
+    return render(request, 'catalog/actions/tovar_add_maker.html', {'items': queryset,
+                                                                    'form': form,
+                                                                    'title': 'Добавить поставщика'})
+
+
+tovar_add_maker.short_description = 'Добавить ПОСТАВЩИКА'
+
+
+def tovar_clear_maker(modeladmin, request, queryset):
+    for item in queryset:
+        item.maker.clear()
+
+
+tovar_clear_maker.short_description = 'Очистить поле ПОСТАВЩИКА'
 
 
 def categoryxml_add_category(modeladmin, request, queryset):
@@ -116,9 +235,8 @@ def categoryxml_add_category(modeladmin, request, queryset):
 
     return render(request, 'catalog/actions/categoryxml_add_category.html', {'items': queryset,
                                                                              'form': form,
-                                                                             'title': 'Добавление категория '
-                                                                                      'на сайт'})
-
+                                                                             'title': 'Добавление категории '
+                                                                                      'на сайте'})
 
 categoryxml_add_category.short_description = 'Добавить КАТЕГОРИЮ НА САЙТЕ'
 
@@ -127,11 +245,44 @@ def categoryxml_clear_category(modeladmin, request, queryset):
     for item in queryset:
         item.category.clear()
 
-
 categoryxml_clear_category.short_description = 'Очистить поле КАТЕГОРИЯ НА САЙТЕ'
 
 
-def brandmaker_add_brand(modeladmin, request, queryset):
+def categoryxml_add_maker(modeladmin, request, queryset):
+    form = None
+
+    if 'apply' in request.POST:
+        form = ChangeCategoryXMLMakerForm(request.POST)
+
+        if form.is_valid():
+            maker = form.cleaned_data['maker']
+
+            print maker
+
+            count = 0
+            for item in queryset:
+                item.maker = maker
+                item.save()
+                count += 1
+
+            modeladmin.message_user(request, 'Поставщик {} '
+                                             'применен к {} категориям от поставщика.'.
+                                    format(maker, count))
+            return HttpResponseRedirect(request.get_full_path())
+
+    if not form:
+        form = ChangeCategoryXMLMakerForm(initial={'_selected_action': request.
+                                          POST.getlist(admin.ACTION_CHECKBOX_NAME)})
+
+    return render(request, 'catalog/actions/categoryxml_add_maker.html', {'items': queryset,
+                                                                          'form': form,
+                                                                          'title': 'Изменение поставщика'})
+
+
+categoryxml_add_maker.short_description = 'Изменить ПОСТАВЩИКА'
+
+
+def brand_maker_add_brand(modeladmin, request, queryset):
     form = None
 
     if 'apply' in request.POST:
@@ -155,52 +306,51 @@ def brandmaker_add_brand(modeladmin, request, queryset):
         form = ChangeBrandMakerBrandForm(initial={'_selected_action': request.
                                          POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/brandmaker_add_brand.html', {'items': queryset,
-                                                                         'form': form,
-                                                                         'title': 'Добавление бренда '
-                                                                                  'на сайт'})
+    return render(request, 'catalog/actions/brand_maker_add_brand.html', {'items': queryset,
+                                                                          'form': form,
+                                                                          'title': 'Добавление бренда '
+                                                                                   'на сайт'})
 
 
-brandmaker_add_brand.short_description = 'Добавить БРЕНД НА САЙТЕ'
+brand_maker_add_brand.short_description = 'Добавить БРЕНД НА САЙТЕ'
 
 
-def brandmaker_clear_brand(modeladmin, request, queryset):
+def brand_maker_clear_brand(modeladmin, request, queryset):
     for item in queryset:
         item.brand.clear()
 
 
-brandmaker_clear_brand.short_description = 'Очистить поле БРЕНД НА САЙТЕ'
+brand_maker_clear_brand.short_description = 'Очистить поле БРЕНД НА САЙТЕ'
 
 
 def print_type_maker_add_print_type(modeladmin, request, queryset):
     form = None
 
     if 'apply' in request.POST:
-        form = ChangeBrandMakerBrandForm(request.POST)
+        form = ChangePrintTypeMakerPrintTypeForm(request.POST)
 
         if form.is_valid():
-            brand = form.cleaned_data['brand']
+            print_type = form.cleaned_data['print_type']
 
             count = 0
             for item in queryset:
-                item.brand = brand
+                item.print_type = print_type
                 item.save()
                 count += 1
 
-            modeladmin.message_user(request, 'Бренд на сайте {} '
-                                             'применен к {} брендам от поставщика.'.
-                                    format(brand, count))
+            modeladmin.message_user(request, 'Вид нанесения от поставщика {} '
+                                             'применен к {} видам нанесения на сайте.'.
+                                    format(print_type, count))
             return HttpResponseRedirect(request.get_full_path())
 
     if not form:
-        form = ChangeBrandMakerBrandForm(initial={'_selected_action': request.
+        form = ChangePrintTypeMakerPrintTypeForm(initial={'_selected_action': request.
                                          POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
     return render(request, 'catalog/actions/print_type_maker_add_print_type.html', {'items': queryset,
                                                                                     'form': form,
-                                                                                    'title': 'Добавление бренда '
+                                                                                    'title': 'Добавление вида нанесения '
                                                                                              'на сайт'})
-
 
 print_type_maker_add_print_type.short_description = 'Добавить ВИД НАНЕСЕНИЯ НА САЙТЕ'
 
@@ -208,6 +358,5 @@ print_type_maker_add_print_type.short_description = 'Добавить ВИД Н�
 def print_type_maker_clear_print_type(modeladmin, request, queryset):
     for item in queryset:
         item.print_type.clear()
-
 
 print_type_maker_clear_print_type.short_description = 'Очистить поле ВИД НАНЕСЕНИЯ НА САЙТЕ'

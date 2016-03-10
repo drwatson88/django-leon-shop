@@ -9,21 +9,27 @@ from admin_filters import CategoryListFilter, CategoryXMLListFilter, \
     BrandListFilter, BrandMakerListFilter, PrintTypeListFilter, \
     PrintTypeMakerListFilter
 from admin_actions import tovar_add_categoryxml, tovar_add_print_type, \
-    tovar_clear_categoryxmls, tovar_clear_print_types
+    tovar_clear_categoryxmls, tovar_clear_print_types, tovar_add_brand, \
+    tovar_add_maker, tovar_add_status, tovar_clear_brand, tovar_clear_maker, \
+    tovar_clear_status, brand_maker_add_brand, brand_maker_clear_brand, \
+    print_type_maker_add_print_type, print_type_maker_clear_print_type, \
+    categoryxml_add_category, categoryxml_add_maker, categoryxml_clear_category
 from models import Category, CategoryXML, SubTovar, Tovar, Status, \
     PrintTypeMaker, PrintType, TovarAttachment, Maker, Brand, BrandMaker
 
 
 class StatusAdmin(admin.ModelAdmin):
-
-    pass
+    list_display = ('official',)
+    search_fields = ('official',)
+    fields = ('official',)
 
 admin.site.register(Status, StatusAdmin)
 
 
 class MakerAdmin(admin.ModelAdmin):
-
-    pass
+    list_display = ('official',)
+    search_fields = ('official',)
+    fields = ('official',)
 
 admin.site.register(Maker, MakerAdmin)
 
@@ -33,6 +39,7 @@ class BrandMakerAdmin(admin.ModelAdmin):
     fields = ('name', 'maker', 'brand',)
     list_filter = ('maker', BrandListFilter)
     search_fields = ('name',)
+    actions = [brand_maker_add_brand, brand_maker_clear_brand]
 
 admin.site.register(BrandMaker, BrandMakerAdmin)
 
@@ -40,6 +47,7 @@ admin.site.register(BrandMaker, BrandMakerAdmin)
 class BrandAdmin(admin.ModelAdmin):
     list_display = ('official',)
     search_fields = ('official',)
+    fields = ('official',)
 
 admin.site.register(Brand, BrandAdmin)
 
@@ -48,6 +56,7 @@ class CategoryXMLAdmin(TreeAdmin):
     list_display = ('name', 'maker', 'category')
     list_filter = ('status', 'maker', CategoryListFilter,)
     search_fields = ('name',)
+    actions = [categoryxml_add_category, categoryxml_clear_category]
 
     form = movenodeform_factory(Category, exclude=('cat_id',
                                                    'import_fl',))
@@ -109,7 +118,10 @@ class TovarAdmin(admin.ModelAdmin):
                    PrintTypeMakerListFilter)
     search_fields = ('name', 'content', 'code',)
     actions = [tovar_add_categoryxml, tovar_add_print_type,
-               tovar_clear_categoryxmls, tovar_clear_print_types]
+               tovar_add_brand, tovar_add_status, tovar_add_maker,
+               tovar_clear_categoryxmls, tovar_clear_print_types,
+               tovar_clear_brand, tovar_clear_status, tovar_clear_maker,
+               ]
     exclude = ('product_id', 'import_fl',)
     # list_editable = ('position',)
     filter_horizontal = ('categoryxml', 'print_type')
@@ -147,6 +159,7 @@ admin.site.register(Tovar, TovarAdmin)
 class PrintTypeAdmin(admin.ModelAdmin):
     list_display = ('official',)
     search_fields = ('official',)
+    fields = ('official',)
 
 admin.site.register(PrintType, PrintTypeAdmin)
 
@@ -156,5 +169,7 @@ class PrintTypeMakerAdmin(admin.ModelAdmin):
     fields = ('name', 'maker', 'print_type',)
     list_filter = ('maker', PrintTypeListFilter)
     search_fields = ('name',)
+    actions = [print_type_maker_add_print_type,
+               print_type_maker_clear_print_type]
 
 admin.site.register(PrintTypeMaker, PrintTypeMakerAdmin)

@@ -2,7 +2,8 @@
 
 
 from django import forms
-from models import CategoryXML, PrintTypeMaker, Category, Brand, PrintType
+from models import CategoryXML, Category, Brand, BrandMaker, PrintType, \
+    PrintTypeMaker, Status, Maker
 
 
 class ChangeTovarCategoryXMLForm(forms.Form):
@@ -17,10 +18,34 @@ class ChangeTovarPrintTypeForm(forms.Form):
                                         label='Вид нанесения от поставщика')
 
 
+class ChangeTovarBrandForm(forms.Form):
+    _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+    brand = forms.ModelChoiceField(queryset=BrandMaker.objects.all(),
+                                   label='Бренд от поставщика')
+
+
+class ChangeTovarStatusForm(forms.Form):
+    _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+    status = forms.ModelChoiceField(queryset=Status.objects.all(),
+                                    label='Статус')
+
+
+class ChangeTovarMakerForm(forms.Form):
+    _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+    maker = forms.ModelChoiceField(queryset=Maker.objects.all(),
+                                   label='Поставщик')
+
+
 class ChangeCategoryXMLCategoryForm(forms.Form):
     _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
     category = forms.ModelChoiceField(queryset=Category.objects.all(),
                                       label='Категория на сайте')
+
+
+class ChangeCategoryXMLMakerForm(forms.Form):
+    _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+    maker = forms.ModelChoiceField(queryset=Maker.objects.all(),
+                                   label='Поставщик')
 
 
 class ChangeBrandMakerBrandForm(forms.Form):
