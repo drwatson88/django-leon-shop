@@ -5,16 +5,16 @@ from django.contrib import admin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 
-from admin_filters import CategoryListFilter, CategoryXMLListFilter, \
+from .admin_filters import CategoryListFilter, CategoryXMLListFilter, \
     BrandListFilter, BrandMakerListFilter, PrintTypeListFilter, \
     PrintTypeMakerListFilter
-from admin_actions import tovar_add_categoryxml, tovar_add_print_type, \
+from .admin_actions import tovar_add_categoryxml, tovar_add_print_type, \
     tovar_clear_categoryxmls, tovar_clear_print_types, tovar_add_brand, \
     tovar_add_maker, tovar_add_status, tovar_clear_brand, tovar_clear_maker, \
     tovar_clear_status, brand_maker_add_brand, brand_maker_clear_brand, \
     print_type_maker_add_print_type, print_type_maker_clear_print_type, \
     categoryxml_add_category, categoryxml_add_maker, categoryxml_clear_category
-from models import Category, CategoryXML, SubTovar, Tovar, Status, \
+from .models import Category, CategoryXML, SubTovar, Tovar, Status, \
     PrintTypeMaker, PrintType, TovarAttachment, Maker, Brand, BrandMaker
 
 

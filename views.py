@@ -11,8 +11,8 @@ from django.http import Http404
 
 from utils.Pagination import PageRange
 
-from models import Category, Tovar, SubTovar, Maker
-from forms import TovarFormFilter
+from .models import Category, Tovar, SubTovar, Maker
+from .forms import TovarFormFilter
 
 
 

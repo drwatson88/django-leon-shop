@@ -2,7 +2,7 @@
 
 
 from django import forms
-from models import CategoryXML, Category, Brand, BrandMaker, PrintType, \
+from .models import CategoryXML, Category, Brand, BrandMaker, PrintType, \
     PrintTypeMaker, Status, Maker
 
 

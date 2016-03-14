@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django import forms
-from models import Maker
+from .models import Maker
 
 
 class Mixin(object):

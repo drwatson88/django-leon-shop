@@ -34,7 +34,7 @@ class Maker(models.Model):
         verbose_name = 'Поставщик'
         verbose_name_plural = 'Поставщики'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.official
 
 
@@ -51,7 +51,7 @@ class Brand(models.Model):
         verbose_name = 'Бренд на сайте'
         verbose_name_plural = 'Бренд на сайте'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.official
 
 
@@ -68,7 +68,7 @@ class BrandMaker(models.Model):
         verbose_name = 'Брэнд от поставщика'
         verbose_name_plural = 'Брэнды от поставщика'
 
-    def __unicode__(self):
+    def __str__(self):
         return u'{} ({})'.format(self.name, self.maker)
 
 
@@ -100,7 +100,7 @@ class Category(MP_Node):
         verbose_name = 'Категория на сайте'
         verbose_name_plural = 'Категории на сайте'
 
-    def __unicode__(self):
+    def __str__(self):
         return u'{}{}'.format((self.depth - 1) * u'---', self.name)
 
 
@@ -127,7 +127,7 @@ class CategoryXML(MP_Node):
             self.cat_id = self.default_cat_id()
         super(CategoryXML, self).save()
 
-    def __unicode__(self):
+    def __str__(self):
         return u'{}{} ({})'.format((self.depth - 1) * u'---', self.name, self.maker)
 
 
@@ -145,7 +145,7 @@ class Status(models.Model):
             self.name = slugify(self.official)
         super(Status, self).save(**kwargs)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.official
 
 
@@ -162,7 +162,7 @@ class PrintType(models.Model):
         verbose_name = 'Вид нанесения на сайте'
         verbose_name_plural = 'Виды нанесения на сайте'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.official
 
 
@@ -180,7 +180,7 @@ class PrintTypeMaker(models.Model):
         verbose_name = 'Вид нанесения от поставщика'
         verbose_name_plural = 'Виды нанесения от поставщика'
 
-    def __unicode__(self):
+    def __str__(self):
         return u'{} ({})'.format(self.name, self.maker)
 
 
@@ -251,7 +251,7 @@ class Tovar(models.Model):
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -327,7 +327,7 @@ class SubTovar(models.Model):
         verbose_name = 'Вариант товара'
         verbose_name_plural = 'Варианты товаров'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -382,7 +382,7 @@ class TovarAttachment(models.Model):
         verbose_name = 'Дополнительный файл (изображение)'
         verbose_name_plural = 'Дополнительные файлы (изображения)'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 

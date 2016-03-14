@@ -1,7 +1,7 @@
 # coding: utf-8
 
 
-from admin_forms import ChangeTovarCategoryXMLForm, ChangeTovarPrintTypeForm, \
+from .admin_forms import ChangeTovarCategoryXMLForm, ChangeTovarPrintTypeForm, \
     ChangeCategoryXMLCategoryForm, ChangeBrandMakerBrandForm, \
     ChangePrintTypeMakerPrintTypeForm, ChangeCategoryXMLMakerForm, \
     ChangeTovarBrandForm, ChangeTovarMakerForm, ChangeTovarStatusForm
@@ -256,8 +256,6 @@ def categoryxml_add_maker(modeladmin, request, queryset):
 
         if form.is_valid():
             maker = form.cleaned_data['maker']
-
-            print maker
 
             count = 0
             for item in queryset:
