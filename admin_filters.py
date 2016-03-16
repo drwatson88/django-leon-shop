@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
 
-class CategoryListFilter(admin.SimpleListFilter):
+class CategorySiteListFilter(admin.SimpleListFilter):
 
     """
     Все подробности в документации - класс фильтр
@@ -13,7 +13,7 @@ class CategoryListFilter(admin.SimpleListFilter):
     """
 
     title = 'Категория на сайте'
-    parameter_name = 'category'
+    parameter_name = 'category_site'
 
     def lookups(self, request, model_admin):
 
@@ -25,9 +25,9 @@ class CategoryListFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
 
         if self.value() == 'Yes':
-            return queryset.filter(category__isnull=False)
+            return queryset.filter(category_site__isnull=False)
         if self.value() == 'No':
-            return queryset.filter(category__isnull=True)
+            return queryset.filter(category_site__isnull=True)
 
 
 class CategoryXMLListFilter(admin.SimpleListFilter):
@@ -37,7 +37,7 @@ class CategoryXMLListFilter(admin.SimpleListFilter):
     """
 
     title = 'Категория поставщика'
-    parameter_name = 'categoryxml'
+    parameter_name = 'category_xml'
 
     def lookups(self, request, model_admin):
 
@@ -49,9 +49,9 @@ class CategoryXMLListFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
 
         if self.value() == 'Yes':
-            return queryset.filter(categoryxml__isnull=False)
+            return queryset.filter(category_xml__isnull=False)
         if self.value() == 'No':
-            return queryset.filter(categoryxml__isnull=True)
+            return queryset.filter(category_xml__isnull=True)
 
 
 class BrandListFilter(admin.SimpleListFilter):

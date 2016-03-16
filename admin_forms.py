@@ -2,43 +2,43 @@
 
 
 from django import forms
-from .models import CategoryXML, Category, Brand, BrandMaker, PrintType, \
+from .models import CategoryXML, CategorySite, Brand, BrandMaker, PrintType, \
     PrintTypeMaker, Status, Maker
 
 
-class ChangeTovarCategoryXMLForm(forms.Form):
+class ChangeProductCategoryXMLForm(forms.Form):
     _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
     categoryxml = forms.ModelChoiceField(queryset=CategoryXML.objects.all(),
                                          label='Категория от поставщика')
 
 
-class ChangeTovarPrintTypeForm(forms.Form):
+class ChangeProductPrintTypeForm(forms.Form):
     _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
     print_type = forms.ModelChoiceField(queryset=PrintTypeMaker.objects.all(),
                                         label='Вид нанесения от поставщика')
 
 
-class ChangeTovarBrandForm(forms.Form):
+class ChangeProductBrandForm(forms.Form):
     _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
     brand = forms.ModelChoiceField(queryset=BrandMaker.objects.all(),
                                    label='Бренд от поставщика')
 
 
-class ChangeTovarStatusForm(forms.Form):
+class ChangeProductStatusForm(forms.Form):
     _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
     status = forms.ModelChoiceField(queryset=Status.objects.all(),
                                     label='Статус')
 
 
-class ChangeTovarMakerForm(forms.Form):
+class ChangeProductMakerForm(forms.Form):
     _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
     maker = forms.ModelChoiceField(queryset=Maker.objects.all(),
                                    label='Поставщик')
 
 
-class ChangeCategoryXMLCategoryForm(forms.Form):
+class ChangeCategoryXMLCategorySiteForm(forms.Form):
     _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
-    category = forms.ModelChoiceField(queryset=Category.objects.all(),
+    category = forms.ModelChoiceField(queryset=CategorySite.objects.all(),
                                       label='Категория на сайте')
 
 

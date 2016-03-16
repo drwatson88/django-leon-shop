@@ -5,6 +5,7 @@ from .models import Maker
 
 
 class Mixin(object):
+
     def __init__(self, data=None, *args, **kwargs):
         super(Mixin, self).__init__(data, *args, **kwargs)
         for k, field in self.fields.items():
@@ -14,7 +15,7 @@ class Mixin(object):
                 field.error_messages[u'invalid'] = u"Неправильно заполнено поле {0:s}.".format(field.label)
 
 
-class TovarFormFilter(Mixin, forms.Form):
+class ProductFormFilter(Mixin, forms.Form):
 
     # maker = forms.ModelChoiceField(queryset=Maker.objects.all(), empty_label=None)
     makers = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, label=u'')

@@ -5,17 +5,17 @@ from django.contrib import admin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 
-from .admin_filters import CategoryListFilter, CategoryXMLListFilter, \
+from .admin_filters import CategorySiteListFilter, CategoryXMLListFilter, \
     BrandListFilter, BrandMakerListFilter, PrintTypeListFilter, \
     PrintTypeMakerListFilter
-from .admin_actions import tovar_add_categoryxml, tovar_add_print_type, \
-    tovar_clear_categoryxmls, tovar_clear_print_types, tovar_add_brand, \
-    tovar_add_maker, tovar_add_status, tovar_clear_brand, tovar_clear_maker, \
-    tovar_clear_status, brand_maker_add_brand, brand_maker_clear_brand, \
+from .admin_actions import product_add_category_xml, product_add_print_type, \
+    product_clear_category_xmls, product_clear_print_types, product_add_brand, \
+    product_add_maker, product_add_status, product_clear_brand, product_clear_maker, \
+    product_clear_status, brand_maker_add_brand, brand_maker_clear_brand, \
     print_type_maker_add_print_type, print_type_maker_clear_print_type, \
-    categoryxml_add_category, categoryxml_add_maker, categoryxml_clear_category
-from .models import Category, CategoryXML, SubTovar, Tovar, Status, \
-    PrintTypeMaker, PrintType, TovarAttachment, Maker, Brand, BrandMaker
+    category_xml_add_category_site, category_xml_add_maker, category_xml_clear_category_site
+from .models import CategorySite, CategoryXML, SubProduct, Product, Status, \
+    PrintTypeMaker, PrintType, ProductAttachment, Maker, Brand, BrandMaker
 
 
 class StatusAdmin(admin.ModelAdmin):
@@ -35,10 +35,10 @@ admin.site.register(Maker, MakerAdmin)
 
 
 class BrandMakerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'maker', 'brand')
-    fields = ('name', 'maker', 'brand',)
+    list_display = ('title', 'maker', 'brand')
+    fields = ('title', 'maker', 'brand',)
     list_filter = ('maker', BrandListFilter)
-    search_fields = ('name',)
+    search_fields = ('title',)
     actions = [brand_maker_add_brand, brand_maker_clear_brand]
 
 admin.site.register(BrandMaker, BrandMakerAdmin)
@@ -53,22 +53,22 @@ admin.site.register(Brand, BrandAdmin)
 
 
 class CategoryXMLAdmin(TreeAdmin):
-    list_display = ('name', 'maker', 'category')
-    list_filter = ('status', 'maker', CategoryListFilter,)
-    search_fields = ('name',)
-    actions = [categoryxml_add_category, categoryxml_clear_category]
+    list_display = ('title', 'maker', 'category')
+    list_filter = ('status', 'maker', CategorySiteListFilter,)
+    search_fields = ('title',)
+    actions = [category_xml_add_category_site, category_xml_clear_category_site]
 
-    form = movenodeform_factory(Category, exclude=('cat_id',
-                                                   'import_fl',))
+    form = movenodeform_factory(CategorySite, exclude=('cat_id',
+                                                       'import_fl',))
 
 admin.site.register(CategoryXML, CategoryXMLAdmin)
 
 
-class CategoryAdmin(TreeAdmin):
+class CategorySiteAdmin(TreeAdmin):
 
-    list_display = ('name', 'icon', 'show', )
+    list_display = ('title', 'icon', 'show', )
     list_filter = ('show', )
-    search_fields = ('name',)
+    search_fields = ('title',)
 
     class Media:
 
@@ -83,50 +83,49 @@ class CategoryAdmin(TreeAdmin):
         try:
             im = get_thumbnail(obj.image, '60x60', crop='center', quality=99)
             return '<img src="{}" border="0" alt=""  align="center" />'.format(im.url)
-        except:
-            return '<img src="{}" border="0" alt="" width="60" height="60" align="center" />'.\
-                format('')
+        except BaseException as exc:
+            return '<img src="" border="0" alt="" width="60" height="60" align="center" />'
 
     icon.short_description = 'Миниатюра'
     icon.allow_tags = True
-    icon.admin_order_field = 'name'
-    prepopulated_fields = {'slug_title': ('name', )}
+    icon.admin_order_field = 'title'
+    prepopulated_fields = {'slug_title': ('title', )}
     # filter_horizontal = ('themes',)
 
-    form = movenodeform_factory(Category)
+    form = movenodeform_factory(CategorySite)
 
-admin.site.register(Category, CategoryAdmin)
+admin.site.register(CategorySite, CategorySiteAdmin)
 
 
-class SubTovarInline(admin.StackedInline):
-    model = SubTovar
-    fields = ('tovar', 'name', 'params', 'stock', 'price')
+class SubProductInline(admin.StackedInline):
+    model = SubProduct
+    fields = ('product', 'title', 'params', 'stock', 'price')
     extra = 1
 
 
-class TovarAttachmentInline(admin.StackedInline):
-    model = TovarAttachment
-    fields = ('tovar', 'name', 'meaning', 'image', 'file')
+class ProductAttachmentInline(admin.StackedInline):
+    model = ProductAttachment
+    fields = ('product', 'title', 'meaning', 'image', 'file')
     extra = 1
 
 
-class TovarAdmin(admin.ModelAdmin):
-    list_display = ('name', 'maker', 'icon', 'show',)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('title', 'maker', 'icon', 'show',)
     list_filter = ('show', 'status', 'maker',
                    CategoryXMLListFilter,
                    BrandMakerListFilter,
                    PrintTypeMakerListFilter)
-    search_fields = ('name', 'content', 'code',)
-    actions = [tovar_add_categoryxml, tovar_add_print_type,
-               tovar_add_brand, tovar_add_status, tovar_add_maker,
-               tovar_clear_categoryxmls, tovar_clear_print_types,
-               tovar_clear_brand, tovar_clear_status, tovar_clear_maker,
+    search_fields = ('title', 'content', 'code',)
+    actions = [product_add_category_xml, product_add_print_type,
+               product_add_brand, product_add_status, product_add_maker,
+               product_clear_category_xmls, product_clear_print_types,
+               product_clear_brand, product_clear_status, product_clear_maker,
                ]
     exclude = ('product_id', 'import_fl',)
     # list_editable = ('position',)
-    filter_horizontal = ('categoryxml', 'print_type')
+    filter_horizontal = ('category_xml', 'print_type')
     inlines = [
-        TovarAttachmentInline, SubTovarInline
+        ProductAttachmentInline, SubProductInline
     ]
 
     def icon(self, obj):
@@ -137,14 +136,14 @@ class TovarAdmin(admin.ModelAdmin):
             try:
                 im = get_thumbnail(obj.small_image, '60x60', crop='center', quality=99)
                 return '<img src="{}" border="0" alt=""  align="center" />'.format(im.url, obj.name)
-            except:
+            except BaseException as exc:
                 return '<img src="" border="0" alt="" width="60" height="60" align="center" />'
 
     icon.short_description = 'Миниатюра'
     icon.allow_tags = True
-    icon.admin_order_field = 'name'
-    prepopulated_fields = {'code': ('name',),
-                           'slug_title': ('name',)}
+    icon.admin_order_field = 'title'
+    prepopulated_fields = {'code': ('title',),
+                           'slug_title': ('title',)}
 
     class Media:
 
@@ -153,7 +152,7 @@ class TovarAdmin(admin.ModelAdmin):
             '/static/grappelli/tinymce_setup/tinymce_setup.js',
         ]
 
-admin.site.register(Tovar, TovarAdmin)
+admin.site.register(Product, ProductAdmin)
 
 
 class PrintTypeAdmin(admin.ModelAdmin):
@@ -165,10 +164,10 @@ admin.site.register(PrintType, PrintTypeAdmin)
 
 
 class PrintTypeMakerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'maker', 'print_type')
-    fields = ('name', 'maker', 'print_type',)
+    list_display = ('title', 'maker', 'print_type')
+    fields = ('title', 'maker', 'print_type',)
     list_filter = ('maker', PrintTypeListFilter)
-    search_fields = ('name',)
+    search_fields = ('title',)
     actions = [print_type_maker_add_print_type,
                print_type_maker_clear_print_type]
 
