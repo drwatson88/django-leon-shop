@@ -3,6 +3,9 @@
 from django.conf.urls import patterns, url
 from .views import CatalogView
 
+
+
+# TODO: добавиь переход к старым урлам
 urlpatterns = patterns(
     'catalog.views',
     # url(r'slash/$', 'slash', name = 'slash'),
