@@ -11,4 +11,4 @@ urlpatterns = patterns(
     # url(r'slash/$', 'slash', name = 'slash'),
     # url(r'^tovar/(?P<tovar_slug_title>.*)/$', 'tovar_inside', name='tovar_inside'),
     # url(r'(?P<catalog_slug_title>.*)/$', CatalogView.as_view(), name='catalog_inside'),
-    url(r'$', 'category_list', name='catalog_main'),)
+    url(r'$', 'catalog_main', name='catalog_main'),)

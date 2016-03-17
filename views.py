@@ -15,15 +15,14 @@ from .models import CategorySite, Product, SubProduct, Maker
 from .forms import ProductFormFilter
 
 
-
-def category_list(request):
-    categorys = CategorySite.get_root_nodes().filter(show=True)
-    # msettings = MSettings.objects.filter(id=1)
-    return render_to_response(
-        'catalog/tmp.html',
-        {
-            'categorys': categorys,
-            }, context_instance=RequestContext(request), )
+# def category_list(request):
+#     category_s = CategorySite.get_root_nodes().filter(show=True)
+#     # msettings = MSettings.objects.filter(id=1)
+#     return render_to_response(
+#         'catalog/catalog_main.html',
+#         {
+#             'category_s': category_s,
+#             }, context_instance=RequestContext(request), )
 
 
 # def category_inside(request, category_uri):
@@ -35,25 +34,29 @@ def category_list(request):
 #     }, context_instance=RequestContext(request), )
 
 
-# def catalog_main(request):
-#
-#     p = 0
-#     k = 6
-#     categorys = list()
-#     categorys_queue = Category.get_root_nodes().filter(show=True)
-#
-#     while p < len(categorys_queue):
-#         categorys.append(categorys_queue[p:p+k])
-#         p = p + k
-#
-#     return render_to_response(
-#         'catalog/catalog_main.html',
-#         {
-#             'categorys': categorys
-#
-#             }, context_instance=RequestContext(request), )
-#
-#
+def catalog_main(request):
+
+    """
+    Главная страница каталога
+    """
+
+    p = 0
+    k = 6
+    category_s = list()
+    category_s_queue = CategorySite.get_root_nodes().filter(show=True)
+
+    while p < len(category_s_queue):
+        category_s.append(category_s_queue[p:p+k])
+        p = p + k
+
+    return render_to_response(
+        'catalog/catalog_main.html',
+        {
+            'category_s': category_s
+
+            }, context_instance=RequestContext(request), )
+
+
 # class CatalogView(FormMixin, ListView):
 #
 #     form_class = TovarFormFilter

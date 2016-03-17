@@ -65,8 +65,8 @@ class BrandMaker(models.Model):
 class CategorySite(MP_Node):
 
     title = models.CharField(verbose_name='Заголовок', max_length=255)
-    slug_title = models.SlugField(verbose_name='Имя для ссылки', unique=True)
-    preview = models.TextField(verbose_name='Краткое описание')
+    slug_title = models.SlugField(verbose_name='Имя для ссылки', unique=True, blank=True)
+    preview = models.TextField(verbose_name='Краткое описание', blank=True, null=True)
     content = models.TextField(verbose_name='Описание', blank=True, null=True)
     show = models.BooleanField(verbose_name='Показывать', default=True)
     image = models.ImageField(verbose_name='Изображение', blank=True, null=True)
@@ -75,15 +75,17 @@ class CategorySite(MP_Node):
     content_seo = models.TextField(verbose_name='Описание для SEO', blank=True, null=True)
     name_seo = models.CharField(verbose_name='Заголовок для SEO', max_length=255, blank=True,
                                 null=True)
-    meta_key = models.CharField(verbose_name='Meta key', max_length=255, blank=True, null=True)
-    meta_des = models.CharField(verbose_name='Meta des', max_length=255, blank=True, null=True)
+    meta_key = models.CharField(verbose_name='Meta key', max_length=255, blank=True,
+                                null=True)
+    meta_des = models.CharField(verbose_name='Meta des', max_length=255, blank=True,
+                                null=True)
 
     def getchildrens(self):
         return CategorySite.get_children(self).filter(show=True)
 
     def save(self, **kwargs):
         if not self.id:
-            self.slug_title = slugify(self.slug_title)
+            self.slug_title = slugify(self.title)
         super(CategorySite, self).save(**kwargs)
 
     class Meta:
@@ -91,19 +93,19 @@ class CategorySite(MP_Node):
         verbose_name_plural = 'Категории на сайте'
 
     def __str__(self):
-        return u'{}{}'.format((self.depth - 1) * u'---', self.title)
+        return '{}{}'.format((self.depth - 1) * '---', self.slug_title)
 
 
 class CategoryXML(MP_Node):
 
     def default_cat_id(self):
-        return hashlib.md5(slugify(self.name)).hexdigest()
+        return hashlib.md5(slugify(self.title).encode(encoding='utf-8')).hexdigest()
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     title = models.CharField(verbose_name='Заголовок', max_length=255, blank=False)
     cat_id = models.CharField(verbose_name='ИД', max_length=100)
-    category = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
-                                 blank=True, null=True, related_name='categorys_xml')
+    category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
+                                      blank=True, null=True, related_name='categorys_xml')
     status = models.ForeignKey('Status', verbose_name='Статус', blank=True, null=True)
     import_fl = models.BooleanField(verbose_name='Импортирован в базу', default=False)
 
@@ -177,14 +179,19 @@ class PrintTypeMaker(models.Model):
 class Product(models.Model):
 
     def default_slug_title(self):
-        return slugify(u'{}_{}_{}'.format(self.maker, self.name, self.code))[:255]
+        try:
+            return slugify('{}_{}_{}'.format(self.maker, self.title, self.code))[:255]
+        except:
+            import pprint
+            pprint.pprint(self)
 
     def default_code(self):
-        return hashlib.md5(slugify(self.name)).hexdigest()
+        return hashlib.md5(slugify(self.title).encode(encoding='utf-8')).hexdigest()
 
-    def product_upload_path(self):
+    def product_upload_path(self, instance):
         return os.path.join('upload_product', self.maker.name, '{}{}'.
-                            format(hashlib.md5(slugify(self.name)).hexdigest(), '.jpg'))
+                            format(hashlib.md5(slugify(self.title).
+                                               encode(encoding='utf-8')).hexdigest(), '.jpg'))
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     title = models.CharField(verbose_name='Заголовок', max_length=255, blank=False)
@@ -194,17 +201,21 @@ class Product(models.Model):
     code = models.CharField(verbose_name='Артикул', max_length=50, blank=True)
     content = models.TextField(verbose_name='Описание', blank=True)
     long_content = models.TextField(verbose_name='Полное описание', blank=True)
-    price = models.DecimalField(verbose_name='Цена', decimal_places=2, max_digits=10, null=True)
+    price = models.DecimalField(verbose_name='Цена', decimal_places=2, max_digits=10,
+                                null=True)
     stock = models.IntegerField(verbose_name='Остаток', null=True, blank=True, default=None)
     size = models.CharField(verbose_name='Размеры', max_length=256, blank=True)
     material = models.CharField(verbose_name='Материал', max_length=128, blank=True)
 
     small_image = models.ImageField(verbose_name='Путь к файлу картинки 200х200',
-                                    blank=True, max_length=255, upload_to=product_upload_path)
+                                    blank=True, max_length=255,
+                                    upload_to=product_upload_path)
     big_image = models.ImageField(verbose_name='Путь к файлу картинки 280х280',
-                                  blank=True, max_length=255, upload_to=product_upload_path)
+                                  blank=True, max_length=255,
+                                  upload_to=product_upload_path)
     super_big_image = models.ImageField(verbose_name='Путь к файлу картинки 1000х1000',
-                                        blank=True, max_length=255, upload_to=product_upload_path)
+                                        blank=True, max_length=255,
+                                        upload_to=product_upload_path)
     brand = ChainedForeignKey(BrandMaker,
                               chained_field='maker',
                               chained_model_field='maker',
@@ -214,14 +225,17 @@ class Product(models.Model):
                               blank=True,
                               null=True)
     status = models.ForeignKey(Status, verbose_name='Статус', blank=True, null=True)
-    category_xml = models.ManyToManyField(CategoryXML, verbose_name=u'Категория для товара',
+    category_xml = models.ManyToManyField(CategoryXML,
+                                          verbose_name=u'Категория для товара',
                                           blank=True)
-    print_type = models.ManyToManyField(PrintTypeMaker, verbose_name=u'Вид нанесения от поставщика',
+    print_type = models.ManyToManyField(PrintTypeMaker,
+                                        verbose_name=u'Вид нанесения от поставщика',
                                         blank=True)
     show = models.BooleanField(verbose_name='Показывать', default=True)
 
     content_seo = models.TextField(verbose_name='Описание для SEO', blank=True)
-    title_seo = models.CharField(verbose_name='Заголовок для SEO', max_length=255, blank=True)
+    title_seo = models.CharField(verbose_name='Заголовок для SEO', max_length=255,
+                                 blank=True)
     meta_key = models.CharField(verbose_name='Meta key', max_length=255, blank=True)
     meta_des = models.CharField(verbose_name='Meta des', max_length=255, blank=True)
 
@@ -235,7 +249,7 @@ class Product(models.Model):
 
     def save(self, **kwargs):
         if not self.id and not self.import_fl:
-            self.code = self.default_code()
+            self.code = self.code or self.default_code()
             self.slug_title = self.default_slug_title()
         super(Product, self).save()
 
@@ -246,14 +260,15 @@ class Product(models.Model):
         verbose_name_plural = 'Товары'
 
     def __str__(self):
-        return self.name
+        return self.title
 
 
 class ProductParamsPack(models.Model):
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     product = models.ForeignKey(Product, verbose_name='Товар')
-    pack_id = models.IntegerField(verbose_name='Порядковый номер пакета у товара', default=0)
+    pack_id = models.IntegerField(verbose_name='Порядковый номер пакета у товара',
+                                  default=0)
     abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
     name = models.CharField(verbose_name='Имя поля', max_length=255)
     value = models.CharField(verbose_name='Значение поля', max_length=255)
@@ -292,7 +307,7 @@ class ProductParamsOther(models.Model):
 class SubProduct(models.Model):
 
     def default_code(self):
-        return hashlib.md5(slugify(self.name)).hexdigest()
+        return hashlib.md5(slugify(self.title).encode(encoding='utf-8')).hexdigest()
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     product = models.ForeignKey(Product, verbose_name='Товар')
@@ -323,7 +338,7 @@ class SubProduct(models.Model):
         verbose_name_plural = 'Варианты товаров'
 
     def __str__(self):
-        return self.name
+        return self.title
 
 
 class SubProductParamsStock(models.Model):
@@ -361,14 +376,17 @@ class ProductAttachment(models.Model):
 
     def product_attachment_upload_path(self):
         return os.path.join('upload_attachment', self.maker.name, '{}{}'.
-                            format(hashlib.md5(slugify(self.name)).hexdigest(), '.jpg'))
+                            format(hashlib.md5(slugify(self.desc).
+                                               encode(encoding='utf-8')).hexdigest(), '.jpg'))
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     product = models.ForeignKey(Product, verbose_name='Товар')
     meaning = models.IntegerField(verbose_name='Тип файла', choices=MEANINGS)
-    file = models.FileField(verbose_name='URL доп.файла', upload_to=product_attachment_upload_path,
+    file = models.FileField(verbose_name='URL доп.файла',
+                            upload_to=product_attachment_upload_path,
                             blank=True)
-    image = models.ImageField(verbose_name='URL доп.картинки', upload_to=product_attachment_upload_path,
+    image = models.ImageField(verbose_name='URL доп.картинки',
+                              upload_to=product_attachment_upload_path,
                               blank=True)
     desc = models.CharField(verbose_name='Описание доп.файла или картинки', max_length=255)
 
@@ -377,7 +395,7 @@ class ProductAttachment(models.Model):
         super(ProductAttachment, self).save()
 
     class Meta:
-        unique_together = ('product', 'image', 'file')
+        unique_together = ('product', 'meaning', 'desc')
         verbose_name = 'Дополнительный файл (изображение)'
         verbose_name_plural = 'Дополнительные файлы (изображения)'
 
@@ -385,10 +403,11 @@ class ProductAttachment(models.Model):
         return self.desc
 
 
-class MSettings(models.Model):
+class Settings(models.Model):
 
     title = models.CharField(verbose_name='Заголовок раздела', max_length=128)
-    content = models.TextField(verbose_name='Контент основной страницы раздела', blank=True, null=True)
+    content = models.TextField(verbose_name='Контент основной страницы раздела',
+                               blank=True, null=True)
 
     class Meta:
         verbose_name = 'Настройка раздела Каталог'

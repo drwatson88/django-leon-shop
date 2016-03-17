@@ -32,7 +32,7 @@ def product_add_category_xml(modeladmin, request, queryset):
 
     if not form:
         form = ChangeProductCategoryXMLForm(initial={'_selected_action': request.
-                                          POST.getlist(admin.ACTION_CHECKBOX_NAME)})
+                                            POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
     return render(request, 'catalog/actions/product_add_category_xml.html', {'items': queryset,
                                                                              'form': form,
@@ -42,11 +42,11 @@ def product_add_category_xml(modeladmin, request, queryset):
 product_add_category_xml.short_description = 'Добавить КАТЕГОРИЮ ОТ ПОСТАВЩИКА'
 
 
-def product_clear_category_xmls(modeladmin, request, queryset):
+def product_clear_category_xml_s(modeladmin, request, queryset):
     for item in queryset:
         item.category_xml.clear()
 
-product_clear_category_xmls.short_description = 'Очистить поле КАТЕГОРИИ ОТ ПОСТАВЩИКА'
+product_clear_category_xml_s.short_description = 'Очистить поле КАТЕГОРИИ ОТ ПОСТАВЩИКА'
 
 
 def product_add_print_type(modeladmin, request, queryset):
@@ -81,11 +81,11 @@ def product_add_print_type(modeladmin, request, queryset):
 product_add_print_type.short_description = 'Добавить ВИД НАНЕСЕНИЯ ОТ ПОСТАВЩИКА'
 
 
-def product_clear_print_types(modeladmin, request, queryset):
+def product_clear_print_type_s(modeladmin, request, queryset):
     for item in queryset:
         item.print_type.clear()
 
-product_clear_print_types.short_description = 'Очистить поле ВИДЫ НАНЕСЕНИЯ ОТ ПОСТАВЩИКА'
+product_clear_print_type_s.short_description = 'Очистить поле ВИДЫ НАНЕСЕНИЯ ОТ ПОСТАВЩИКА'
 
 
 def product_add_brand(modeladmin, request, queryset):

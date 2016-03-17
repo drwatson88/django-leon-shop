@@ -9,7 +9,7 @@ from .admin_filters import CategorySiteListFilter, CategoryXMLListFilter, \
     BrandListFilter, BrandMakerListFilter, PrintTypeListFilter, \
     PrintTypeMakerListFilter
 from .admin_actions import product_add_category_xml, product_add_print_type, \
-    product_clear_category_xmls, product_clear_print_types, product_add_brand, \
+    product_clear_category_xml_s, product_clear_print_type_s, product_add_brand, \
     product_add_maker, product_add_status, product_clear_brand, product_clear_maker, \
     product_clear_status, brand_maker_add_brand, brand_maker_clear_brand, \
     print_type_maker_add_print_type, print_type_maker_clear_print_type, \
@@ -53,10 +53,11 @@ admin.site.register(Brand, BrandAdmin)
 
 
 class CategoryXMLAdmin(TreeAdmin):
-    list_display = ('title', 'maker', 'category')
+    list_display = ('title', 'maker', 'category_site')
     list_filter = ('status', 'maker', CategorySiteListFilter,)
     search_fields = ('title',)
-    actions = [category_xml_add_category_site, category_xml_clear_category_site]
+    actions = [category_xml_add_category_site, category_xml_clear_category_site,
+               category_xml_add_maker]
 
     form = movenodeform_factory(CategorySite, exclude=('cat_id',
                                                        'import_fl',))
@@ -105,7 +106,7 @@ class SubProductInline(admin.StackedInline):
 
 class ProductAttachmentInline(admin.StackedInline):
     model = ProductAttachment
-    fields = ('product', 'title', 'meaning', 'image', 'file')
+    fields = ('product', 'desc', 'meaning', 'image', 'file')
     extra = 1
 
 
@@ -118,7 +119,7 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('title', 'content', 'code',)
     actions = [product_add_category_xml, product_add_print_type,
                product_add_brand, product_add_status, product_add_maker,
-               product_clear_category_xmls, product_clear_print_types,
+               product_clear_category_xml_s, product_clear_print_type_s,
                product_clear_brand, product_clear_status, product_clear_maker,
                ]
     exclude = ('product_id', 'import_fl',)
@@ -135,8 +136,9 @@ class ProductAdmin(admin.ModelAdmin):
 
             try:
                 im = get_thumbnail(obj.small_image, '60x60', crop='center', quality=99)
-                return '<img src="{}" border="0" alt=""  align="center" />'.format(im.url, obj.name)
+                return '<img src="{}" border="0" alt=""  align="center" />'.format(im.url)
             except BaseException as exc:
+                print(ValueError(exc))
                 return '<img src="" border="0" alt="" width="60" height="60" align="center" />'
 
     icon.short_description = 'Миниатюра'
