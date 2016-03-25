@@ -34,10 +34,14 @@ def product_add_category_xml(modeladmin, request, queryset):
         form = ChangeProductCategoryXMLForm(initial={'_selected_action': request.
                                             POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/product_add_category_xml.html', {'items': queryset,
-                                                                             'form': form,
-                                                                             'title': 'Добавление категории '
-                                                                                      'от поставщика'})
+    return render(request, 'admin/catalog/actions/product_add_category_xml.html',
+                      {
+                          'items': queryset,
+                          'form': form,
+                          'title': 'Добавление категории '
+                                   'от поставщика'
+                      }
+                  )
 
 product_add_category_xml.short_description = 'Добавить КАТЕГОРИЮ ОТ ПОСТАВЩИКА'
 
@@ -73,10 +77,14 @@ def product_add_print_type(modeladmin, request, queryset):
         form = ChangeProductPrintTypeForm(initial={'_selected_action': request.
                                         POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/product_add_print_type.html', {'items': queryset,
-                                                                           'form': form,
-                                                                           'title': 'Добавить вид нанесения '
-                                                                                    'от поставщика'})
+    return render(request, 'admin/catalog/actions/product_add_print_type.html',
+                      {
+                          'items': queryset,
+                          'form': form,
+                          'title': 'Добавить вид нанесения '
+                                   'от поставщика'
+                      }
+                  )
 
 product_add_print_type.short_description = 'Добавить ВИД НАНЕСЕНИЯ ОТ ПОСТАВЩИКА'
 
@@ -112,10 +120,14 @@ def product_add_brand(modeladmin, request, queryset):
         form = ChangeProductBrandForm(initial={'_selected_action': request.
                                     POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/product_add_brand.html', {'items': queryset,
-                                                                      'form': form,
-                                                                      'title': 'Добавить бренд '
-                                                                               'от поставщика'})
+    return render(request, 'admin/catalog/actions/product_add_brand.html',
+                      {
+                          'items': queryset,
+                          'form': form,
+                          'title': 'Добавить бренд '
+                                   'от поставщика'
+                      }
+                  )
 
 
 product_add_brand.short_description = 'Добавить БРЕНД ОТ ПОСТАВЩИКА'
@@ -153,9 +165,13 @@ def product_add_status(modeladmin, request, queryset):
         form = ChangeProductStatusForm(initial={'_selected_action': request.
                                      POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/product_add_status.html', {'items': queryset,
-                                                                       'form': form,
-                                                                       'title': 'Добавить статус'})
+    return render(request, 'admin/catalog/actions/product_add_status.html',
+                      {
+                          'items': queryset,
+                           'form': form,
+                           'title': 'Добавить статус'
+                      }
+                  )
 
 
 product_add_status.short_description = 'Добавить СТАТУС'
@@ -193,9 +209,13 @@ def product_add_maker(modeladmin, request, queryset):
         form = ChangeProductMakerForm(initial={'_selected_action': request.
                                     POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/product_add_maker.html', {'items': queryset,
-                                                                      'form': form,
-                                                                      'title': 'Добавить поставщика'})
+    return render(request, 'admin/catalog/actions/product_add_maker.html',
+                      {
+                          'items': queryset,
+                          'form': form,
+                          'title': 'Добавить поставщика'
+                      }
+                  )
 
 
 product_add_maker.short_description = 'Добавить ПОСТАВЩИКА'
@@ -233,10 +253,14 @@ def category_xml_add_category_site(modeladmin, request, queryset):
         form = ChangeCategoryXMLCategorySiteForm(initial={'_selected_action': request.
                                              POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/category_xml_add_category_site.html', {'items': queryset,
-                                                                                   'form': form,
-                                                                                   'title': 'Добавление категории '
-                                                                                            'на сайте'})
+    return render(request, 'admin/catalog/actions/category_xml_add_category_site.html',
+                      {
+                          'items': queryset,
+                           'form': form,
+                           'title': 'Добавление категории '
+                                    'на сайте'
+                      }
+                  )
 
 category_xml_add_category_site.short_description = 'Добавить КАТЕГОРИЮ НА САЙТЕ'
 
@@ -272,9 +296,13 @@ def category_xml_add_maker(modeladmin, request, queryset):
         form = ChangeCategoryXMLMakerForm(initial={'_selected_action': request.
                                           POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/category_xml_add_maker.html', {'items': queryset,
-                                                                           'form': form,
-                                                                           'title': 'Изменение поставщика'})
+    return render(request, 'admin/catalog/actions/category_xml_add_maker.html',
+                      {
+                          'items': queryset,
+                          'form': form,
+                          'title': 'Изменение поставщика'
+                      }
+                  )
 
 
 category_xml_add_maker.short_description = 'Изменить ПОСТАВЩИКА'
@@ -304,10 +332,14 @@ def brand_maker_add_brand(modeladmin, request, queryset):
         form = ChangeBrandMakerBrandForm(initial={'_selected_action': request.
                                          POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/brand_maker_add_brand.html', {'items': queryset,
-                                                                          'form': form,
-                                                                          'title': 'Добавление бренда '
-                                                                                   'на сайт'})
+    return render(request, 'admin/catalog/actions/brand_maker_add_brand.html',
+                      {
+                          'items': queryset,
+                          'form': form,
+                          'title': 'Добавление бренда '
+                                   'на сайт'
+                      }
+                  )
 
 
 brand_maker_add_brand.short_description = 'Добавить БРЕНД НА САЙТЕ'
@@ -345,10 +377,14 @@ def print_type_maker_add_print_type(modeladmin, request, queryset):
         form = ChangePrintTypeMakerPrintTypeForm(initial={'_selected_action': request.
                                          POST.getlist(admin.ACTION_CHECKBOX_NAME)})
 
-    return render(request, 'catalog/actions/print_type_maker_add_print_type.html', {'items': queryset,
-                                                                                    'form': form,
-                                                                                    'title': 'Добавление вида нанесения'
-                                                                                             'на сайт'})
+    return render(request, 'admin/catalog/actions/print_type_maker_add_print_type.html',
+                      {
+                          'items': queryset,
+                          'form': form,
+                          'title': 'Добавление вида нанесения'
+                                   'на сайт'
+                      }
+                  )
 
 print_type_maker_add_print_type.short_description = 'Добавить ВИД НАНЕСЕНИЯ НА САЙТЕ'
 

@@ -105,7 +105,7 @@ class CategoryXML(MP_Node):
     title = models.CharField(verbose_name='Заголовок', max_length=255, blank=False)
     cat_id = models.CharField(verbose_name='ИД', max_length=100)
     category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
-                                      blank=True, null=True, related_name='categorys_xml')
+                                      blank=True, null=True, related_name='category_xml_s')
     status = models.ForeignKey('Status', verbose_name='Статус', blank=True, null=True)
     import_fl = models.BooleanField(verbose_name='Импортирован в базу', default=False)
 

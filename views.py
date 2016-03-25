@@ -3,233 +3,120 @@
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 
-# from .utils import get_tovars_without_filters
-
-from django.views.generic import ListView
-from django.views.generic.edit import FormMixin, ContextMixin
-from django.http import Http404
-
-from utils.Pagination import PageRange
-
-from .models import CategorySite, Product, SubProduct, Maker
-from .forms import ProductFormFilter
+from .models import CategorySite, Product, Brand, BrandMaker
 
 
-# def category_list(request):
-#     category_s = CategorySite.get_root_nodes().filter(show=True)
-#     # msettings = MSettings.objects.filter(id=1)
-#     return render_to_response(
-#         'catalog/catalog_main.html',
-#         {
-#             'category_s': category_s,
-#             }, context_instance=RequestContext(request), )
+def category_list(request, ):
 
+    """ View for category list. Delimiter k = 6.
 
-# def category_inside(request, category_uri):
-#
-#     get_tovars_without_filters(category_uri)
-#     return render_to_response('catalog/category_inside.html',
-#     {
-#         'tovars': tovars,
-#     }, context_instance=RequestContext(request), )
-
-
-def catalog_main(request):
-
+        :param request request input for all views
+        :type request object
     """
-    Главная страница каталога
-    """
+
+    category_all = list()
+    category_s_queue = CategorySite.get_root_nodes().filter(show=True)
 
     p = 0
     k = 6
-    category_s = list()
-    category_s_queue = CategorySite.get_root_nodes().filter(show=True)
-
     while p < len(category_s_queue):
-        category_s.append(category_s_queue[p:p+k])
-        p = p + k
+        category_all.append(category_s_queue[p:p+k])
+        p += k
 
     return render_to_response(
-        'catalog/catalog_main.html',
+        'blocks/catalog/category_list.html',
         {
-            'category_s': category_s
+            'category_all': category_all
+        },
+        context_instance=RequestContext(request), )
 
-            }, context_instance=RequestContext(request), )
+
+def product_list(request, catalog_slug_title):
+
+    """ View for products in category (category maybe not low level,
+        in this case products collect in all daughter's category's)
+        All category's have two levels.
+
+        :param request Request
+        :type request object
+
+        :param catalog_slug_title slug_title - unique key for all category's
+        :type catalog_slug_title str
+    """
+
+    # Get POST params
+    grid = request.GET.get('grid', 1)
+    grid_cnt = request.GET.get('grid_cnt', 4)
+    order_by = request.GET.get('order_by', 'title')
+    page_size = request.GET.get('page_size', 20)
+    page_no = request.GET.get('page_no', 1)
+    brand_id_s = request.GET.get('brands', [])
+
+    # Validation
+    grid_cnt = int(grid_cnt) if grid_cnt in (3, 4) else 4
+    page_size = int(page_size) if page_size > 5 else 20
+    page_no = int(page_no) if page_no > 0 else 1
+
+    if order_by.strip('-') in ('title', 'price'):
+        order_by = order_by
+    elif order_by == 'default':
+        order_by = 'title'
+
+    brand_id_s = brand_id_s if isinstance(brand_id_s, list) else []
+
+    # Category's query's
+    root_category_s = CategorySite.get_root_nodes()
+    current_category = CategorySite.objects.filter(slug_title=catalog_slug_title)[0]
+    parent_category = current_category.get_parent()
+
+    if not parent_category:
+        parent_category = current_category
+        parent_category.selected = True
+    else:
+        parent_category.selected = False
+
+    category_xml_s = list(current_category.category_xml_s.all().values_list('id', flat=True))
+    children_category_s = parent_category.getchildrens()
+    for cat in children_category_s:
+        if parent_category.id == current_category.id:
+            category_xml_s.extend(cat.category_xml_s.all().values_list('id', flat=True))
+        cat.selected = True if cat.id == current_category.id else False
+
+    # Brands
+    brand_obj_s = Brand.objects.all()
+    brand_id_s = brand_id_s if brand_id_s else brand_obj_s.values_list('id', flat=True)
+    for brand_obj in brand_obj_s:
+        if brand_obj.id in brand_id_s:
+            brand_obj.checked = True
+    brand_maker_id_s = BrandMaker.objects.filter(brand__in=brand_id_s). \
+        values_list('id', flat=True)
+
+    # Product's query
+    product_obj_s_query = Product.objects.filter(category_xml__in=category_xml_s, brand__in=brand_maker_id_s)
+    page_no = page_no if (page_no-1)*page_size < len(product_obj_s_query) else 1
+    product_obj_s = product_obj_s_query.order_by(order_by)[(page_no-1)*page_size: page_no*page_size]
+    product_s = [product_obj_s[k: k + grid_cnt] for k in range(0, len(product_obj_s)//grid_cnt)]
+
+    return render_to_response(
+        'blocks/catalog/product_list.html',
+        {
+            'current_category': current_category,
+            'parent_category': parent_category,
+            'children_category_s': children_category_s,
+
+            'product_s': product_s,
+            # 'page': page,
+
+            'root_category_s': root_category_s,
+
+            'brand_s': brand_obj_s
+        },
+        context_instance=RequestContext(request), )
 
 
-# class CatalogView(FormMixin, ListView):
-#
-#     form_class = TovarFormFilter
-#     template_name = 'catalog/catalog_inside.html'
-#     context_object_name = 'obj_list'
-#     paginate_by = 30
-#
-#     def get_context_data(self, **kwargs):
-#         cd = super(CatalogView, self).get_context_data(**kwargs)
-#         cd['page_range'] = PageRange(
-#             cd['page_obj'].number,
-#             cd['page_obj'].paginator.num_pages,
-#             3, 3, 3)
-#         # cd['query'] = self.get_query(self.form)
-#         cd['form'] = self.form
-#         cd['categorys'] = self.categorys
-#         cd['parent_category'] = self.parent_category
-#         cd['childrens_categorys'] = self.childrens_categorys
-#         cd['current_category'] = self.current_category
-#         return cd
-#
-#     # def get_query(self, form):
-#     #     """
-#     #     Returns the query provided by the user.
-#     #     Returns an empty string if the query is invalid.
-#     #     """
-#     #     if form.is_valid():
-#     #         return form.cleaned_data['q']
-#     #     return ''
-#
-#     def get(self, request, *args, **kwargs):
-#         form_class = self.get_form_class()
-#         self.form = self.get_form(form_class)
-#         return super(CatalogView, self).get(request, *args, **kwargs)
-#
-#     def post(self, request, *args, **kwargs):
-#         form_class = self.get_form_class()
-#         self.form = self.get_form(form_class)
-#         return super(CatalogView, self).get(request, *args, **kwargs)
-#
-#     def get_queryset(self):
-#
-#         self.form.fields['makers'].choices = \
-#             [(x.id, x) for x in Maker.objects.all()]
-#
-#         catalog_slug_title = self.kwargs['catalog_slug_title']
-#         self.categorys = Category.get_root_nodes()
-#         self.current_category = Category.objects.filter(slug_title=
-#                                                         catalog_slug_title)[0]
-#
-#         #TODO: сделать обработку исключения и выход на 404 при отсутсвии категории
-#         self.parent_category = self.current_category.get_parent()
-#         if not self.parent_category:
-#             self.parent_category = self.current_category
-#             self.parent_category.selected = True
-#         else:
-#             self.parent_category.selected = False
-#
-#         categorys_xml = list(self.current_category.categorys_xml.all().
-#                              values_list('id'))
-#         self.childrens_categorys = self.parent_category.getchildrens()
-#         for cat in self.childrens_categorys:
-#             if self.parent_category.id == self.current_category.id:
-#                 categorys_xml.extend(cat.categorys_xml.all().values_list('id'))
-#             cat.selected = True if cat.id == self.current_category.id else False
-#
-#         tovars = Tovar.objects.filter(categoryxml__in=categorys_xml)
-#         form_lst = ['makers', 'price_fr', 'price_to']
-#
-#         fpage = True
-#         post = True if self.request.method == 'POST' else False
-#         for p in form_lst:
-#             try:
-#                 obj_numb = self.request.POST.get(p, '')
-#                 if p == 'makers' and post:
-#                     post_makers = self.request.POST.getlist(p, '')
-#                     makers = Maker.objects.filter(id__in=post_makers)
-#                     tovars = tovars.filter(maker__in=makers)
-#                     CatalogView.paginate_by = 1000
-#                     fpage = False
-#                 elif p == 'price_fr' and obj_numb and post:
-#                     # obj = CatalogView.objects.get(id=int(obj_numb))
-#                     tovars = tovars.filter(price__gte=obj_numb)
-#                     CatalogView.paginate_by = 1000
-#                     fpage = False
-#                 elif p == 'price_to' and obj_numb and post:
-#                     tovars = tovars.filter(price__lte=obj_numb)
-#                     CatalogView.paginate_by = 1000
-#                     fpage = False
-#             except:
-#                 pass
-#         if fpage:
-#             CatalogView.paginate_by = 30
-#         return tovars.order_by('-id')
-#
-#
-# def tovar_inside(request, *args, **kwargs):
-#
-#     tovar_slug_title = kwargs['tovar_slug_title']
-#
-#     """
-#     Находим главный товар
-#     """
-#     try:
-#         tovar = Tovar.objects.get(slug_title=tovar_slug_title)
-#     except Tovar.DoesNotExist:
-#         raise Http404()
-#
-#     """
-#     Берем пакет хранения из таблицы доп.параметров пакета
-#     """
-#     tovar.pack_current = {}
-#     for pack_param in tovar.tovarparamspack_set.all()\
-#             .order_by('position'):
-#         tovar.pack_current.update({
-#             pack_param.abbr: [pack_param.name, pack_param.value]
-#         })
-#
-#     tovar.other = {}
-#     for other_param in tovar.tovarparamsother_set.all()\
-#             .order_by('position'):
-#         tovar.other.update({
-#             other_param.abbr: [other_param.name, other_param.value]
-#         })
-#     # tovar.matherial = tovar.other['matherial'][1]
-#     # tovar.weight = tovar.other['weight'][1]
-#     # tovar.product_size = tovar.other['product_size'][1]
-#
-#     tovar.image_current = tovar.super_big_image or tovar.big_image \
-#                           or tovar.small_image
-#     tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
-#     tovar.attach_files = tovar.tovarattachment_set.filter(meaning=0)
-#
-#     subtovars = SubTovar.objects.filter(tovar=tovar)
-#     for subtovar in subtovars:
-#         subtovar.stock_current = {}
-#         for stock_param in tovar.tovarparamspack_set.all()\
-#                 .order_by('position'):
-#             subtovar.stock_current.update({
-#                 stock_param.abbr: [stock_param.name, stock_param.value]
-#             })
-#
-#     """
-#     По категориям работа для sidebara
-#     """
-#     categorys_xml = tovar.categoryxml.all()
-#     path_categorys = [cat_xml.category for cat_xml in categorys_xml
-#                       if cat_xml.category is not None]
-#     current_category = path_categorys[0]
-#
-#     categorys = Category.get_root_nodes()
-#
-#     #TODO: сделать обработку исключения и выход на 404 при отсутсвии категории
-#     parent_category = current_category.get_parent()
-#     if not parent_category:
-#         parent_category = current_category
-#         parent_category.selected = True
-#     else:
-#         parent_category.selected = False
-#
-#     childrens_categorys = parent_category.getchildrens()
-#     for cat in childrens_categorys:
-#         cat.selected = True if cat.id == current_category.id else False
-#
-#     return render_to_response(
-#         'catalog/tovar_inside.html',
-#         {
-#             'categorys': categorys,
-#             'parent_category': parent_category,
-#             'childrens_categorys': childrens_categorys,
-#             'current_category': current_category,
-#
-#             'tovar': tovar,
-#             'subtovars': subtovars,
-#
-#             }, context_instance=RequestContext(request), )
+def product_inside(request):
+
+    return render_to_response(
+        'blocks/catalog/category_list.html',
+        {},
+        context_instance=RequestContext(request), )
