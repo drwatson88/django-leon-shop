@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from django.template import RequestContext
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
 
 from .models import CategorySite, Product, Brand, BrandMaker
+from .base import CatalogBaseView, ParamsValidatorMixin
+
+
+PAGE_STEP = 10
+PAGE_SIZE = 20
+GRID_COUNT = 4
 
 
 def category_list(request, ):
@@ -45,10 +51,11 @@ def product_list(request, catalog_slug_title):
     """
 
     # Get POST params
+    ajax = request.GET.get('ajax', 0)
     grid = request.GET.get('grid', 1)
-    grid_cnt = request.GET.get('grid_cnt', 4)
+    grid_cnt = request.GET.get('grid_cnt', GRID_COUNT)
     order_by = request.GET.get('order_by', 'title')
-    page_size = request.GET.get('page_size', 20)
+    page_size = request.GET.get('page_size', PAGE_SIZE)
     page_no = request.GET.get('page_no', 1)
     brand_id_s = request.GET.get('brands', [])
 
@@ -92,26 +99,49 @@ def product_list(request, catalog_slug_title):
         values_list('id', flat=True)
 
     # Product's query
-    product_obj_s_query = Product.objects.filter(category_xml__in=category_xml_s, brand__in=brand_maker_id_s)
+    product_obj_s_query = Product.objects.filter(category_xml__in=category_xml_s,
+                                                 brand__in=brand_maker_id_s)
+    product_obj_s_count = len(product_obj_s_query)
     page_no = page_no if (page_no-1)*page_size < len(product_obj_s_query) else 1
     product_obj_s = product_obj_s_query.order_by(order_by)[(page_no-1)*page_size: page_no*page_size]
     product_s = [product_obj_s[k: k + grid_cnt] for k in range(0, len(product_obj_s)//grid_cnt)]
 
-    return render_to_response(
-        'blocks/catalog/product_list.html',
-        {
-            'current_category': current_category,
-            'parent_category': parent_category,
-            'children_category_s': children_category_s,
-
-            'product_s': product_s,
-            # 'page': page,
-
-            'root_category_s': root_category_s,
-
-            'brand_s': brand_obj_s
-        },
-        context_instance=RequestContext(request), )
+    # Pages
+    page_s = [{'id': k} for k in range((page_no//PAGE_STEP)*PAGE_STEP + 1,
+                                       min((page_no//PAGE_STEP + 1)*PAGE_STEP,
+                                           product_obj_s_count//page_size + 1) + 1)]
+    page_start = (page_no//PAGE_STEP)*PAGE_STEP + 1
+    page_stop = (page_no//PAGE_STEP + 1)*PAGE_STEP
+    page_count = product_obj_s_count//page_size
+    if not ajax:
+        return render_to_response(
+            'blocks/catalog/product_list_general.html',
+            {
+                'current_category': current_category,
+                'parent_category': parent_category,
+                'children_category_s': children_category_s,
+                'root_category_s': root_category_s,
+                'product_s': product_s,
+                'brand_s': brand_obj_s,
+                'pages': page_s,
+                'page_start': page_start,
+                'page_stop': page_stop,
+                'page_count': page_count
+            },
+            context_instance=RequestContext(request), )
+    else:
+        return render_to_response(
+            'blocks/catalog/product_list_ajax.html',
+            {
+                'current_category': current_category,
+                'parent_category': parent_category,
+                'children_category_s': children_category_s,
+                'root_category_s': root_category_s,
+                'product_s': product_s,
+                'brand_s': brand_obj_s,
+                'pages': {}
+            },
+            context_instance=RequestContext(request), )
 
 
 def product_inside(request):
@@ -120,3 +150,77 @@ def product_inside(request):
         'blocks/catalog/category_list.html',
         {},
         context_instance=RequestContext(request), )
+
+
+class ProductListView(CatalogBaseView, ParamsValidatorMixin):
+
+    """ Product List View. Receives get params
+        and response neither arguments in get
+        request params.
+
+        GET Params:
+
+        1. AJAX - if ajax is True, we have response
+        html part, that insert in DOM structure in client
+        side. If we have True, we response all html
+        document with base template.
+
+        2.
+
+        ALL PARAMS put in params_storage after validate
+    """
+
+    params_slots = {
+        # 'ajax': [None, 0],
+        # 'grid': [None, 0],
+        # 'grid_cnt': [None, GRID_COUNT],
+        # 'order_by': [None, 'title'],
+        # 'page_no': [None, 1],
+        # 'brand_id_s': [None, []],
+    }
+
+    params_storage = {}
+
+    # def _category_s_query(self):
+    #     root_category_s = CategorySite.get_root_nodes()
+    #     current_category = CategorySite.objects.filter(slug_title=catalog_slug_title)[0]
+    #     parent_category = current_category.get_parent()
+    #
+    #     if not parent_category:
+    #         parent_category = current_category
+    #         parent_category.selected = True
+    #     else:
+    #         parent_category.selected = False
+    #
+    #     category_xml_s = list(current_category.category_xml_s.all().values_list('id', flat=True))
+    #     children_category_s = parent_category.getchildrens()
+    #     for cat in children_category_s:
+    #         if parent_category.id == current_category.id:
+    #             category_xml_s.extend(cat.category_xml_s.all().values_list('id', flat=True))
+    #         cat.selected = True if cat.id == current_category.id else False
+    #
+    # def _brand_s_query(self):
+    #     brand_obj_s = Brand.objects.all()
+    #     brand_id_s = brand_id_s if brand_id_s else brand_obj_s.values_list('id', flat=True)
+    #     for brand_obj in brand_obj_s:
+    #         if brand_obj.id in brand_id_s:
+    #             brand_obj.checked = True
+    #     brand_maker_id_s = BrandMaker.objects.filter(brand__in=brand_id_s). \
+    #         values_list('id', flat=True)
+    #
+    # def _product_s_query(self):
+    #     product_obj_s_query = Product.objects.filter(category_xml__in=category_xml_s,
+    #                                              brand__in=brand_maker_id_s)
+    #     product_obj_s_count = len(product_obj_s_query)
+    #     page_no = page_no if (page_no-1)*page_size < len(product_obj_s_query) else 1
+    #     product_obj_s = product_obj_s_query.order_by(order_by)[(page_no-1)*page_size: page_no*page_size]
+    #     product_s = [product_obj_s[k: k + grid_cnt] for k in range(0, len(product_obj_s)//grid_cnt)]
+
+
+
+
+    def get(self, *args, **kwargs):
+
+        print(self.kwargs)
+        return HttpResponse('123123')
+
