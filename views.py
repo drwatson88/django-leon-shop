@@ -171,56 +171,95 @@ class ProductListView(CatalogBaseView, ParamsValidatorMixin):
     """
 
     params_slots = {
-        # 'ajax': [None, 0],
-        # 'grid': [None, 0],
-        # 'grid_cnt': [None, GRID_COUNT],
-        # 'order_by': [None, 'title'],
-        # 'page_no': [None, 1],
-        # 'brand_id_s': [None, []],
+        'ajax': [None, 0],
+        'grid': [None, 0],
+        'grid_cnt': [None, GRID_COUNT],
+        'order_by': [None, 'title'],
+        'page_no': [None, 1],
+        'page_size': [None, 20],
+        'brand_id_s': [None, []],
     }
 
     params_storage = {}
 
-    # def _category_s_query(self):
-    #     root_category_s = CategorySite.get_root_nodes()
-    #     current_category = CategorySite.objects.filter(slug_title=catalog_slug_title)[0]
-    #     parent_category = current_category.get_parent()
-    #
-    #     if not parent_category:
-    #         parent_category = current_category
-    #         parent_category.selected = True
-    #     else:
-    #         parent_category.selected = False
-    #
-    #     category_xml_s = list(current_category.category_xml_s.all().values_list('id', flat=True))
-    #     children_category_s = parent_category.getchildrens()
-    #     for cat in children_category_s:
-    #         if parent_category.id == current_category.id:
-    #             category_xml_s.extend(cat.category_xml_s.all().values_list('id', flat=True))
-    #         cat.selected = True if cat.id == current_category.id else False
-    #
-    # def _brand_s_query(self):
-    #     brand_obj_s = Brand.objects.all()
-    #     brand_id_s = brand_id_s if brand_id_s else brand_obj_s.values_list('id', flat=True)
-    #     for brand_obj in brand_obj_s:
-    #         if brand_obj.id in brand_id_s:
-    #             brand_obj.checked = True
-    #     brand_maker_id_s = BrandMaker.objects.filter(brand__in=brand_id_s). \
-    #         values_list('id', flat=True)
-    #
-    # def _product_s_query(self):
-    #     product_obj_s_query = Product.objects.filter(category_xml__in=category_xml_s,
-    #                                              brand__in=brand_maker_id_s)
-    #     product_obj_s_count = len(product_obj_s_query)
-    #     page_no = page_no if (page_no-1)*page_size < len(product_obj_s_query) else 1
-    #     product_obj_s = product_obj_s_query.order_by(order_by)[(page_no-1)*page_size: page_no*page_size]
-    #     product_s = [product_obj_s[k: k + grid_cnt] for k in range(0, len(product_obj_s)//grid_cnt)]
+    output_context = {
+        'root_category_s': None,
+        'current_category': None,
+        'parent_category': None,
+        'category_xml_s': None,
+        'children_category_s': None,
+        'brand_obj_s': None,
+        'brand_maker_id_s': None,
+        'product_s': None,
+        'page_s': None,
+        'page_start': None,
+        'page_stop': None,
+        'page_count': None
+    }
 
+    def _category_s_query(self, catalog_slug_title):
+        self.root_category_s = CategorySite.get_root_nodes()
+        self.current_category = CategorySite.objects.filter(slug_title=catalog_slug_title)[0]
+        self.parent_category = self.current_category.get_parent()
 
+        if not self.parent_category:
+            self.parent_category = self.current_category
+            self.parent_category.selected = True
+        else:
+            self.parent_category.selected = False
 
+        self.category_xml_s = list(self.current_category.category_xml_s.all().values_list('id', flat=True))
+        self.children_category_s = self.parent_category.getchildrens()
+        for cat in self.children_category_s:
+            if self.parent_category.id == self.current_category.id:
+                self.category_xml_s.extend(cat.category_xml_s.all().values_list('id', flat=True))
+            cat.selected = True if cat.id == self.current_category.id else False
+
+    def _brand_s_query(self, brand_id_s):
+        self.brand_obj_s = Brand.objects.all()
+        brand_id_s = brand_id_s if brand_id_s else self.brand_obj_s.values_list('id', flat=True)
+        for brand_obj in self.brand_obj_s:
+            if brand_obj.id in brand_id_s:
+                brand_obj.checked = True
+        self.brand_maker_id_s = BrandMaker.objects.filter(brand__in=brand_id_s). \
+            values_list('id', flat=True)
+
+    def _product_s_query(self, page_no, page_size, order_by, grid_cnt):
+        product_obj_s_query = Product.objects.filter(category_xml__in=self.category_xml_s,
+                                                     brand__in=self.brand_maker_id_s)
+        self.product_obj_s_count = len(product_obj_s_query)
+        page_no = page_no if (page_no-1)*page_size < len(product_obj_s_query) else 1
+        product_obj_s = product_obj_s_query.order_by(order_by)[(page_no-1)*page_size: page_no*page_size]
+        self.product_s = [product_obj_s[k: k + grid_cnt] for k in range(0, len(product_obj_s)//grid_cnt)]
+
+    def _page_s(self, page_no, page_size):
+        self.page_s = [{'id': k} for k in range((page_no//PAGE_STEP)*PAGE_STEP + 1,
+                                                min((page_no//PAGE_STEP + 1)*PAGE_STEP,
+                                                self.product_obj_s_count//page_size + 1) + 1)]
+        self.page_start = (page_no//PAGE_STEP)*PAGE_STEP + 1
+        self.page_stop = (page_no//PAGE_STEP + 1)*PAGE_STEP
+        self.page_count = self.product_obj_s_count//page_size
+
+    def _aggregate(self):
+        for item in self.output_context:
+            self.output_context[item] = getattr(self, item)
 
     def get(self, *args, **kwargs):
-
-        print(self.kwargs)
-        return HttpResponse('123123')
+        self._category_s_query(self.kwargs['catalog_slug_title'])
+        self._brand_s_query(self.params_storage['brand_id_s'])
+        self._product_s_query(self.params_storage['page_no'], self.params_storage['page_size'],
+                              self.params_storage['order_by'], self.params_storage['grid_cnt'])
+        self._page_s(self.params_storage['page_no'],
+                     self.params_storage['page_size'])
+        self._aggregate()
+        if not self.params_storage['ajax']:
+            return render_to_response(
+                'blocks/catalog/product_list_general.html',
+                self.output_context,
+                context_instance=RequestContext(self.request), )
+        else:
+            return render_to_response(
+                'blocks/catalog/product_list_ajax.html',
+                self.output_context,
+                context_instance=RequestContext(self.request), )
 

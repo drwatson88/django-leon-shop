@@ -7,6 +7,10 @@ from django.utils.decorators import classonlymethod
 
 class ParamsValidatorMixin(object):
 
+    """ Mixin with validators for validate
+        request parameters.
+    """
+
     @staticmethod
     def _ajax_validator(value, default):
         return default
@@ -25,6 +29,10 @@ class ParamsValidatorMixin(object):
 
     @staticmethod
     def _page_no_validator(value, default):
+        return default
+
+    @staticmethod
+    def _page_size_validator(value, default):
         return default
 
     @staticmethod
