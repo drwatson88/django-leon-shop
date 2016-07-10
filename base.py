@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import json
+
 from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
 from django.views.generic import View
 from django.utils.decorators import classonlymethod
@@ -13,18 +15,26 @@ class ParamsValidatorMixin(object):
 
     @staticmethod
     def _ajax_validator(value, default):
-        return default
+        try:
+            return int(value)
+        except BaseException as exc:
+            return default
 
     @staticmethod
     def _grid_validator(value, default):
-        return default
+        if value == 'grid':
+            return 1
+        elif value == 'list':
+            return 0
+        else:
+            return 1
 
     @staticmethod
     def _grid_cnt_validator(value, default):
         return default
 
     @staticmethod
-    def _order_by_validator(value, default):
+    def _order_validator(value, default):
         return default
 
     @staticmethod
@@ -37,7 +47,10 @@ class ParamsValidatorMixin(object):
 
     @staticmethod
     def _brand_id_s_validator(value, default):
-        return default
+        try:
+            return json.loads(value)
+        except BaseException as exc:
+            return default
 
 
 class CatalogBaseView(View):
@@ -48,6 +61,7 @@ class CatalogBaseView(View):
 
     params_slots = {}
     params_storage = {}
+    output_context = {}
 
     @classmethod
     def _install_validate_s(cls):

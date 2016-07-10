@@ -164,38 +164,42 @@ class ProductListView(CatalogBaseView, ParamsValidatorMixin):
         html part, that insert in DOM structure in client
         side. If we have True, we response all html
         document with base template.
-
-        2.
+        2. GRID - grid or list
+        3. GRID_CNT - count columns in grid
+        4. ORDER - sort order
+        5. PAGE_NO - page number
+        6. PAGE_SIZE - size of page (count = rows*columns)
+        7. BRAND_ID_S - list of id's in database of site brands
 
         ALL PARAMS put in params_storage after validate
     """
 
     params_slots = {
         'ajax': [None, 0],
-        'grid': [None, 0],
+        'grid': [None, 1],
         'grid_cnt': [None, GRID_COUNT],
-        'order_by': [None, 'title'],
+        'order': [None, 'title'],
         'page_no': [None, 1],
         'page_size': [None, 20],
         'brand_id_s': [None, []],
     }
 
-    params_storage = {}
-
-    output_context = {
-        'root_category_s': None,
-        'current_category': None,
-        'parent_category': None,
-        'category_xml_s': None,
-        'children_category_s': None,
-        'brand_obj_s': None,
-        'brand_maker_id_s': None,
-        'product_s': None,
-        'page_s': None,
-        'page_start': None,
-        'page_stop': None,
-        'page_count': None
-    }
+    def __init__(self, *args, **kwargs):
+        self.params_storage = {}
+        self.output_context = {
+            'root_category_s': None,
+            'current_category': None,
+            'parent_category': None,
+            'category_xml_s': None,
+            'children_category_s': None,
+            'brand_obj_s': None,
+            'product_s': None,
+            'page_s': None,
+            'page_start': None,
+            'page_stop': None,
+            'page_count': None
+        }
+        super(ProductListView, self).__init__(*args, **kwargs)
 
     def _category_s_query(self, catalog_slug_title):
         self.root_category_s = CategorySite.get_root_nodes()
@@ -208,7 +212,8 @@ class ProductListView(CatalogBaseView, ParamsValidatorMixin):
         else:
             self.parent_category.selected = False
 
-        self.category_xml_s = list(self.current_category.category_xml_s.all().values_list('id', flat=True))
+        self.category_xml_s = list(self.current_category.category_xml_s.all().
+                                   values_list('id', flat=True))
         self.children_category_s = self.parent_category.getchildrens()
         for cat in self.children_category_s:
             if self.parent_category.id == self.current_category.id:
@@ -224,18 +229,21 @@ class ProductListView(CatalogBaseView, ParamsValidatorMixin):
         self.brand_maker_id_s = BrandMaker.objects.filter(brand__in=brand_id_s). \
             values_list('id', flat=True)
 
-    def _product_s_query(self, page_no, page_size, order_by, grid_cnt):
+    def _product_s_query(self, page_no, page_size, order, grid_cnt):
         product_obj_s_query = Product.objects.filter(category_xml__in=self.category_xml_s,
                                                      brand__in=self.brand_maker_id_s)
         self.product_obj_s_count = len(product_obj_s_query)
         page_no = page_no if (page_no-1)*page_size < len(product_obj_s_query) else 1
-        product_obj_s = product_obj_s_query.order_by(order_by)[(page_no-1)*page_size: page_no*page_size]
+        product_obj_s = product_obj_s_query.order_by(order)[(page_no-1)*page_size: page_no*page_size]
         self.product_s = [product_obj_s[k: k + grid_cnt] for k in range(0, len(product_obj_s)//grid_cnt)]
 
     def _page_s(self, page_no, page_size):
-        self.page_s = [{'id': k} for k in range((page_no//PAGE_STEP)*PAGE_STEP + 1,
-                                                min((page_no//PAGE_STEP + 1)*PAGE_STEP,
-                                                self.product_obj_s_count//page_size + 1) + 1)]
+        self.page_s = [
+            {
+               'id': k, 'active': (True if k == page_no else False)
+            } for k in range((page_no//PAGE_STEP)*PAGE_STEP + 1,
+                             min((page_no//PAGE_STEP + 1)*PAGE_STEP,
+                                 self.product_obj_s_count//page_size + 1) + 1)]
         self.page_start = (page_no//PAGE_STEP)*PAGE_STEP + 1
         self.page_stop = (page_no//PAGE_STEP + 1)*PAGE_STEP
         self.page_count = self.product_obj_s_count//page_size
@@ -248,7 +256,7 @@ class ProductListView(CatalogBaseView, ParamsValidatorMixin):
         self._category_s_query(self.kwargs['catalog_slug_title'])
         self._brand_s_query(self.params_storage['brand_id_s'])
         self._product_s_query(self.params_storage['page_no'], self.params_storage['page_size'],
-                              self.params_storage['order_by'], self.params_storage['grid_cnt'])
+                              self.params_storage['order'], self.params_storage['grid_cnt'])
         self._page_s(self.params_storage['page_no'],
                      self.params_storage['page_size'])
         self._aggregate()
