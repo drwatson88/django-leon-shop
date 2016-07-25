@@ -52,6 +52,10 @@ class ParamsValidatorMixin(object):
         except BaseException as exc:
             return default
 
+    @staticmethod
+    def _product_stock_validator(value, default):
+        return default
+
 
 class CatalogBaseView(View):
 

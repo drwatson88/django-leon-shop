@@ -3,7 +3,7 @@
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
 
-from .models import CategorySite, Product, Brand, BrandMaker
+from .models import CategorySite, Product, SubProduct, Brand, BrandMaker
 from .base import CatalogBaseView, ParamsValidatorMixin
 
 
@@ -21,7 +21,7 @@ def category_list(request, ):
     """
 
     category_all = list()
-    category_s_queue = CategorySite.get_root_nodes().filter(show=True)
+    category_s_queue = CategorySite.get_root_nodes().filter(show=True).all()
 
     p = 0
     k = 6
@@ -144,7 +144,7 @@ def product_list(request, catalog_slug_title):
             context_instance=RequestContext(request), )
 
 
-def product_inside(request):
+def product_inside(request, product_slug_title):
 
     return render_to_response(
         'blocks/catalog/category_list.html',
@@ -271,3 +271,178 @@ class ProductListView(CatalogBaseView, ParamsValidatorMixin):
                 self.output_context,
                 context_instance=RequestContext(self.request), )
 
+
+class ProductInsideView(CatalogBaseView, ParamsValidatorMixin):
+
+    """ Product Inside View.
+    """
+
+    params_slots = {
+        'ajax': [None, 0],
+        'product_stock': [None, 0],
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.params_storage = {}
+        self.output_context = {
+            'product': None,
+            'subproduct_s': None
+        }
+        super(ProductInsideView, self).__init__(*args, **kwargs)
+
+    def _set_product(self, product_slug_title):
+        self.product = get_object_or_404(Product, slug_title=product_slug_title)
+
+    def _set_product_params_pack(self):
+        self.product.params_pack = []
+        for pack_param in self.product.productparamspack_set.filter(pack_id=0).\
+                order_by('position').all():
+            self.product.params_pack.append({'name': pack_param.name,
+                                             'value': pack_param.value,
+                                             'position': pack_param.position})
+
+    def _set_product_params_stock(self):
+        self.product.params_stock = []
+        for stock_param in self.product.productparamsstock_set.order_by('position').all():
+            self.product.params_stock.append({'name': stock_param.name,
+                                              'value': stock_param.value,
+                                              'position': stock_param.position})
+
+    def _set_product_params_other(self):
+        self.product.params_other = []
+        for other_param in self.product.productparamsother_set.order_by('position').all():
+            self.product.params_other.append({'name': other_param.name,
+                                              'value': other_param.value,
+                                              'position': other_param.position})
+
+    def _set_product_image(self):
+        self.product.image_current = self.product.super_big_image or self.product.big_image \
+                      or self.product.small_image
+
+    def _set_product_attach_image_s(self):
+        self.product.attach_images = self.product.productattachment_set.filter(meaning=1)
+
+    def _set_product_attach_file_s(self):
+        self.product.attach_files = self.product.productattachment_set.filter(meaning=0)
+
+    def _set_subproduct_s(self):
+        self.subproduct_s = SubProduct.objects.filter(product=self.product)
+        for sp in self.subproduct_s:
+            sp.params_stock = []
+            for stock_param in sp.subproductparamsstock_set.order_by('position').all():
+                sp.params_stock.append({'name': stock_param.name,
+                                        'value': stock_param.value,
+                                        'position': stock_param.position})
+            sp.params_other = []
+            for other_param in sp.subproductparamsother_set.order_by('position').all():
+                sp.params_other.append({'name': other_param.name,
+                                        'value': other_param.value,
+                                        'position': other_param.position})
+
+    def _aggregate(self):
+        for item in self.output_context:
+            self.output_context[item] = getattr(self, item)
+
+    def get(self, *args, **kwargs):
+        self._set_product(self.kwargs['product_slug_title'])
+        self._set_product_params_pack()
+        self._set_product_params_stock()
+        self._set_product_params_other()
+        self._set_product_image()
+        self._set_product_attach_image_s()
+        self._set_product_attach_file_s()
+        self._set_subproduct_s()
+        self._aggregate()
+
+        if not self.params_storage['ajax']:
+            return render_to_response(
+                'blocks/catalog/product_inside_general.html',
+                self.output_context,
+                context_instance=RequestContext(self.request), )
+        else:
+            return render_to_response(
+                'blocks/catalog/product_inside_ajax.html',
+                self.output_context,
+                context_instance=RequestContext(self.request), )
+
+
+
+
+#     tovar_slug_title = kwargs['tovar_slug_title']
+#
+#     """
+#     Находим главный товар
+#     """
+#     try:
+#         tovar = Tovar.objects.get(slug_title=tovar_slug_title)
+#     except Tovar.DoesNotExist:
+#         raise Http404()
+#
+#     """
+#     Берем пакет хранения из таблицы доп.параметров пакета
+#     """
+#     tovar.pack_current = {}
+#     for pack_param in tovar.tovarparamspack_set.all()\
+#             .order_by('position'):
+#         tovar.pack_current.update({
+#             pack_param.abbr: [pack_param.name, pack_param.value]
+#         })
+#
+#     tovar.other = {}
+#     for other_param in tovar.tovarparamsother_set.all()\
+#             .order_by('position'):
+#         tovar.other.update({
+#             other_param.abbr: [other_param.name, other_param.value]
+#         })
+#     # tovar.matherial = tovar.other['matherial'][1]
+#     # tovar.weight = tovar.other['weight'][1]
+#     # tovar.product_size = tovar.other['product_size'][1]
+#
+#     tovar.image_current = tovar.super_big_image or tovar.big_image \
+#                           or tovar.small_image
+#     tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
+#     tovar.attach_files = tovar.tovarattachment_set.filter(meaning=0)
+#
+#     subtovars = SubTovar.objects.filter(tovar=tovar)
+#     for subtovar in subtovars:
+#         subtovar.stock_current = {}
+#         for stock_param in tovar.tovarparamspack_set.all()\
+#                 .order_by('position'):
+#             subtovar.stock_current.update({
+#                 stock_param.abbr: [stock_param.name, stock_param.value]
+#             })
+#
+#     """
+#     По категориям работа для sidebara
+#     """
+#     categorys_xml = tovar.categoryxml.all()
+#     path_categorys = [cat_xml.category for cat_xml in categorys_xml
+#                       if cat_xml.category is not None]
+#     current_category = path_categorys[0]
+#
+#     categorys = Category.get_root_nodes()
+#
+#     #TODO: сделать обработку исключения и выход на 404 при отсутсвии категории
+#     parent_category = current_category.get_parent()
+#     if not parent_category:
+#         parent_category = current_category
+#         parent_category.selected = True
+#     else:
+#         parent_category.selected = False
+#
+#     childrens_categorys = parent_category.getchildrens()
+#     for cat in childrens_categorys:
+#         cat.selected = True if cat.id == current_category.id else False
+#
+#     return render_to_response(
+#         'catalog/tovar_inside.html',
+#         {
+#             'categorys': categorys,
+#             'parent_category': parent_category,
+#             'childrens_categorys': childrens_categorys,
+#             'current_category': current_category,
+#
+#             'tovar': tovar,
+#             'subtovars': subtovars,
+#
+#             }, context_instance=RequestContext(request), )

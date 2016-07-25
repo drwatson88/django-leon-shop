@@ -179,11 +179,7 @@ class PrintTypeMaker(models.Model):
 class Product(models.Model):
 
     def default_slug_title(self):
-        try:
-            return slugify('{}_{}_{}'.format(self.maker, self.title, self.code))[:255]
-        except:
-            import pprint
-            pprint.pprint(self)
+        return slugify('{}_{}_{}'.format(self.maker, self.title, self.code))[:255]
 
     def default_code(self):
         return hashlib.md5(slugify(self.title).encode(encoding='utf-8')).hexdigest()
@@ -282,6 +278,7 @@ class ProductParamsStock(models.Model):
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     product = models.ForeignKey(Product, verbose_name='Товар')
+
     abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
     name = models.CharField(verbose_name='Имя поля', max_length=255)
     value = models.CharField(verbose_name='Значение поля', max_length=255)
@@ -295,6 +292,7 @@ class ProductParamsOther(models.Model):
 
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     product = models.ForeignKey(Product, verbose_name='Товар')
+
     abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
     name = models.CharField(verbose_name='Имя поля', max_length=255)
     value = models.CharField(verbose_name='Значение поля', max_length=4000)
