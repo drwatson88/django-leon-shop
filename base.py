@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import json
-
-from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
 from django.views.generic import View
-from django.utils.decorators import classonlymethod
 
 
-class ParamsValidatorMixin(object):
+class CatalogParamsValidatorMixin(object):
 
     """ Mixin with validators for validate
         request parameters.

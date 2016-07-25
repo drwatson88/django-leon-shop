@@ -4,7 +4,7 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
 
 from .models import CategorySite, Product, SubProduct, Brand, BrandMaker
-from .base import CatalogBaseView, ParamsValidatorMixin
+from .base import CatalogBaseView, CatalogParamsValidatorMixin
 
 
 PAGE_STEP = 10
@@ -152,7 +152,7 @@ def product_inside(request, product_slug_title):
         context_instance=RequestContext(request), )
 
 
-class ProductListView(CatalogBaseView, ParamsValidatorMixin):
+class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
 
     """ Product List View. Receives get params
         and response neither arguments in get
@@ -272,9 +272,21 @@ class ProductListView(CatalogBaseView, ParamsValidatorMixin):
                 context_instance=RequestContext(self.request), )
 
 
-class ProductInsideView(CatalogBaseView, ParamsValidatorMixin):
+class ProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
 
-    """ Product Inside View.
+    """ Product Inside View. Receives get params
+        and response neither arguments in get
+        request params.
+
+        GET Params:
+
+        1. AJAX - if ajax is True, we have response
+        html part, that insert in DOM structure in client
+        side. If we have True, we response all html
+        document with base template.
+        2. PRODUCT_STOCK - stock count of products
+
+        ALL PARAMS put in params_storage after validate
     """
 
     params_slots = {
@@ -286,7 +298,8 @@ class ProductInsideView(CatalogBaseView, ParamsValidatorMixin):
         self.params_storage = {}
         self.output_context = {
             'product': None,
-            'subproduct_s': None
+            'subproduct_s': None,
+            'total_price': None
         }
         super(ProductInsideView, self).__init__(*args, **kwargs)
 
@@ -339,6 +352,11 @@ class ProductInsideView(CatalogBaseView, ParamsValidatorMixin):
                                         'value': other_param.value,
                                         'position': other_param.position})
 
+    def _get_amount(self):
+        product_stock = self.params_storage['product_stock']
+        unit_price = self.product.price
+        self.total_price = unit_price * product_stock
+
     def _aggregate(self):
         for item in self.output_context:
             self.output_context[item] = getattr(self, item)
@@ -352,6 +370,7 @@ class ProductInsideView(CatalogBaseView, ParamsValidatorMixin):
         self._set_product_attach_image_s()
         self._set_product_attach_file_s()
         self._set_subproduct_s()
+        self._get_amount()
         self._aggregate()
 
         if not self.params_storage['ajax']:
@@ -364,85 +383,3 @@ class ProductInsideView(CatalogBaseView, ParamsValidatorMixin):
                 'blocks/catalog/product_inside_ajax.html',
                 self.output_context,
                 context_instance=RequestContext(self.request), )
-
-
-
-
-#     tovar_slug_title = kwargs['tovar_slug_title']
-#
-#     """
-#     Находим главный товар
-#     """
-#     try:
-#         tovar = Tovar.objects.get(slug_title=tovar_slug_title)
-#     except Tovar.DoesNotExist:
-#         raise Http404()
-#
-#     """
-#     Берем пакет хранения из таблицы доп.параметров пакета
-#     """
-#     tovar.pack_current = {}
-#     for pack_param in tovar.tovarparamspack_set.all()\
-#             .order_by('position'):
-#         tovar.pack_current.update({
-#             pack_param.abbr: [pack_param.name, pack_param.value]
-#         })
-#
-#     tovar.other = {}
-#     for other_param in tovar.tovarparamsother_set.all()\
-#             .order_by('position'):
-#         tovar.other.update({
-#             other_param.abbr: [other_param.name, other_param.value]
-#         })
-#     # tovar.matherial = tovar.other['matherial'][1]
-#     # tovar.weight = tovar.other['weight'][1]
-#     # tovar.product_size = tovar.other['product_size'][1]
-#
-#     tovar.image_current = tovar.super_big_image or tovar.big_image \
-#                           or tovar.small_image
-#     tovar.attach_images = tovar.tovarattachment_set.filter(meaning=1)
-#     tovar.attach_files = tovar.tovarattachment_set.filter(meaning=0)
-#
-#     subtovars = SubTovar.objects.filter(tovar=tovar)
-#     for subtovar in subtovars:
-#         subtovar.stock_current = {}
-#         for stock_param in tovar.tovarparamspack_set.all()\
-#                 .order_by('position'):
-#             subtovar.stock_current.update({
-#                 stock_param.abbr: [stock_param.name, stock_param.value]
-#             })
-#
-#     """
-#     По категориям работа для sidebara
-#     """
-#     categorys_xml = tovar.categoryxml.all()
-#     path_categorys = [cat_xml.category for cat_xml in categorys_xml
-#                       if cat_xml.category is not None]
-#     current_category = path_categorys[0]
-#
-#     categorys = Category.get_root_nodes()
-#
-#     #TODO: сделать обработку исключения и выход на 404 при отсутсвии категории
-#     parent_category = current_category.get_parent()
-#     if not parent_category:
-#         parent_category = current_category
-#         parent_category.selected = True
-#     else:
-#         parent_category.selected = False
-#
-#     childrens_categorys = parent_category.getchildrens()
-#     for cat in childrens_categorys:
-#         cat.selected = True if cat.id == current_category.id else False
-#
-#     return render_to_response(
-#         'catalog/tovar_inside.html',
-#         {
-#             'categorys': categorys,
-#             'parent_category': parent_category,
-#             'childrens_categorys': childrens_categorys,
-#             'current_category': current_category,
-#
-#             'tovar': tovar,
-#             'subtovars': subtovars,
-#
-#             }, context_instance=RequestContext(request), )
