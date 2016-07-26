@@ -174,7 +174,7 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         ALL PARAMS put in params_storage after validate
     """
 
-    params_slots = {
+    request_params_slots = {
         'ajax': [None, 0],
         'grid': [None, 1],
         'grid_cnt': [None, GRID_COUNT],
@@ -203,7 +203,8 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
 
     def _category_s_query(self, catalog_slug_title):
         self.root_category_s = CategorySite.get_root_nodes()
-        self.current_category = CategorySite.objects.filter(slug_title=catalog_slug_title)[0]
+        self.current_category = CategorySite.objects.filter(
+                slug_title=catalog_slug_title)[0]
         self.parent_category = self.current_category.get_parent()
 
         if not self.parent_category:
@@ -217,12 +218,14 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.children_category_s = self.parent_category.getchildrens()
         for cat in self.children_category_s:
             if self.parent_category.id == self.current_category.id:
-                self.category_xml_s.extend(cat.category_xml_s.all().values_list('id', flat=True))
+                self.category_xml_s.extend(cat.category_xml_s.all().
+                                           values_list('id', flat=True))
             cat.selected = True if cat.id == self.current_category.id else False
 
     def _brand_s_query(self, brand_id_s):
         self.brand_obj_s = Brand.objects.all()
-        brand_id_s = brand_id_s if brand_id_s else self.brand_obj_s.values_list('id', flat=True)
+        brand_id_s = brand_id_s if brand_id_s else self.brand_obj_s.\
+            values_list('id', flat=True)
         for brand_obj in self.brand_obj_s:
             if brand_obj.id in brand_id_s:
                 brand_obj.checked = True
@@ -234,8 +237,10 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
                                                      brand__in=self.brand_maker_id_s)
         self.product_obj_s_count = len(product_obj_s_query)
         page_no = page_no if (page_no-1)*page_size < len(product_obj_s_query) else 1
-        product_obj_s = product_obj_s_query.order_by(order)[(page_no-1)*page_size: page_no*page_size]
-        self.product_s = [product_obj_s[k: k + grid_cnt] for k in range(0, len(product_obj_s)//grid_cnt)]
+        product_obj_s = product_obj_s_query.\
+            order_by(order)[(page_no-1)*page_size: page_no*page_size]
+        self.product_s = [product_obj_s[k: k + grid_cnt]
+                          for k in range(0, len(product_obj_s)//grid_cnt)]
 
     def _page_s(self, page_no, page_size):
         self.page_s = [
@@ -289,7 +294,7 @@ class ProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
         ALL PARAMS put in params_storage after validate
     """
 
-    params_slots = {
+    request_params_slots = {
         'ajax': [None, 0],
         'product_stock': [None, 0],
     }
@@ -356,10 +361,6 @@ class ProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
         product_stock = self.params_storage['product_stock']
         unit_price = self.product.price
         self.total_price = unit_price * product_stock
-
-    def _aggregate(self):
-        for item in self.output_context:
-            self.output_context[item] = getattr(self, item)
 
     def get(self, *args, **kwargs):
         self._set_product(self.kwargs['product_slug_title'])

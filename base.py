@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import json
-from django.views.generic import View
+from leon.base import BaseView, ParamsValidatorMixin
 
 
-class CatalogParamsValidatorMixin(object):
+class CatalogParamsValidatorMixin(ParamsValidatorMixin):
 
     """ Mixin with validators for validate
         request parameters.
@@ -54,43 +54,10 @@ class CatalogParamsValidatorMixin(object):
         return default
 
 
-class CatalogBaseView(View):
+class CatalogBaseView(BaseView):
 
     """ Class Base for all Catalog Class Views
         When request is received, then
     """
 
-    params_slots = {}
-    params_storage = {}
-    output_context = {}
-
-    @classmethod
-    def _install_validate_s(cls):
-        for param in cls.params_slots:
-            cls.params_slots[param][0] = getattr(cls, '_{param}_validator'.format(param=param))
-
-    @classmethod
-    def as_view(cls, **initkwargs):
-        cls._install_validate_s()
-        return super(CatalogBaseView, cls).as_view(**initkwargs)
-
-    def dispatch(self, request, *args, **kwargs):
-
-        """ Dispatch redetermine for route in validate
-            for every method and every param
-
-            :param request Request http
-            :type request object
-
-        """
-
-        method = getattr(request, 'method')
-        method_params = getattr(request, method.upper())
-        validators = getattr(self, 'params_slots')
-        self.params_storage = {}
-        for k, v in validators.items():
-            validator = v[0]
-            default = v[1]
-            self.params_storage[k] = validator(method_params.get(k), default)
-        return super(CatalogBaseView, self).dispatch(request, *args, **kwargs)
-
+    pass
