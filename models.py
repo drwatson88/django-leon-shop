@@ -176,6 +176,25 @@ class PrintTypeMaker(models.Model):
         return u'{} ({})'.format(self.title, self.maker)
 
 
+class ProductType(models.Model):
+
+    name = models.CharField(verbose_name='Тип продукта', max_length=255, unique=True)
+    official = models.CharField(verbose_name='Наименование тип продукта', max_length=255)
+
+    def save(self, **kwargs):
+        if not self.id:
+            self.name = slugify(self.official)
+        super(ProductType, self).save(**kwargs)
+
+    class Meta:
+
+        verbose_name = 'Тип продукта'
+        verbose_name_plural = 'Тип продукта'
+
+    def __str__(self):
+        return self.official
+
+
 class Product(models.Model):
 
     def default_slug_title(self):
@@ -200,7 +219,7 @@ class Product(models.Model):
     price = models.DecimalField(verbose_name='Цена', decimal_places=2, max_digits=10,
                                 null=True)
     stock = models.IntegerField(verbose_name='Остаток', null=True, blank=True, default=None)
-    size = models.CharField(verbose_name='Размеры', max_length=256, blank=True)
+    model_list = models.CharField(verbose_name='Список моделей субтоваров', max_length=256, blank=True)
     material = models.CharField(verbose_name='Материал', max_length=128, blank=True)
 
     small_image = models.ImageField(verbose_name='Путь к файлу картинки 200х200',
@@ -312,6 +331,8 @@ class SubProduct(models.Model):
 
     title = models.CharField(verbose_name='Заголовок', max_length=255)
     code = models.CharField(verbose_name='Артикул', max_length=50)
+    model_name = models.DecimalField(verbose_name='Название ', decimal_places=2,
+                                     max_digits=10, null=True)
     sub_product_id = models.CharField(verbose_name='ИД', max_length=50)
     main_product_id = models.CharField(verbose_name='ИД родителя', max_length=50)
 

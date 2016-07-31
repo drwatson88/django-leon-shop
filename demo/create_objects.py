@@ -86,7 +86,7 @@ def main(project_dir):
                                                      maker=maker,
                                                      category_site=(category_site for category_site
                                                                     in CategorySite.objects.filter(depth=1)),
-                                                     cat_id=mixer.RANDOM
+                                                     cat_id=(i for i in range(1, 9))
                                                      )
         for cat_xml_parent in category_xml_parent_s:
             cat_xml_parent_obj = CategoryXML.add_root(
@@ -102,8 +102,9 @@ def main(project_dir):
                                                         maker=maker,
                                                         category_site=(category_site for category_site
                                                                        in CategorySite.objects.filter(depth=2)),
-                                                        cat_id=mixer.RANDOM
-                                                        )
+                                                        cat_id=(i for i in range(int(cat_xml_parent.cat_id) * 10,
+                                                                                 int(cat_xml_parent.cat_id) * 10 + 10)))
+
             for cat_xml_child in category_xml_child_s:
                 cat_xml_child_obj = cat_xml_parent_obj.add_child(
                     maker=maker,
@@ -117,89 +118,116 @@ def main(project_dir):
     # Generate a random product
     mixer = Mixer(commit=True)
     for maker in Maker.objects.all():
-        product_s = mixer.cycle(100).blend(Product,
-                                           maker=maker,
-                                           brand=(brand for brand in
-                                                  list(BrandMaker.objects.
-                                                       filter(maker=maker))*100),
-                                           status=Status.objects.all()[0],
-                                           small_image=PRODUCT_IMAGE,
-                                           big_image=PRODUCT_IMAGE,
-                                           super_big_image=PRODUCT_IMAGE,
-                                           code=(str(x) for x in range(1000, 10000, 2)),
-                                           category_xml=(cat_xml for cat_xml in
-                                                         list(CategoryXML.objects.
-                                                              filter(maker=maker))*100),
-                                           print_type=(print_type for print_type in
-                                                       list(PrintTypeMaker.objects.
-                                                            filter(maker=maker))*100),
-                                           import_fl=1
-                                           )
+        product_s = mixer.cycle(50).blend(Product,
+                                          maker=maker,
+                                          brand=(brand for brand in
+                                                 list(BrandMaker.objects.
+                                                      filter(maker=maker))*100),
+                                          status=Status.objects.all()[0],
+                                          small_image=PRODUCT_IMAGE,
+                                          big_image=PRODUCT_IMAGE,
+                                          super_big_image=PRODUCT_IMAGE,
+                                          code=(str(x) for x in range(1000, 10000, 2)),
+                                          category_xml=(cat_xml for cat_xml in
+                                                        list(CategoryXML.objects.
+                                                             filter(maker=maker))*100),
+                                          print_type=(print_type for print_type in
+                                                      list(PrintTypeMaker.objects.
+                                                           filter(maker=maker))*100),
+                                          import_fl=1)
 
         # Generate a random product attachment
-        product_attachment_s = mixer.cycle(200).blend(ProductAttachment,
+        product_attachment_s = mixer.cycle(100).blend(ProductAttachment,
                                                       maker=maker,
                                                       product=(product for product in
                                                                list(Product.objects.
-                                                                    filter(maker=maker))*5),
+                                                                    filter(maker=maker).all())*2),
                                                       file=PRODUCT_IMAGE,
                                                       image=PRODUCT_IMAGE
                                                       )
+        print(Product.objects.filter(maker=maker).all())
 
         # Generate a random product params pack
-        product_params_pack_s = mixer.cycle(200).blend(ProductParamsPack,
+        product_params_pack_s = mixer.cycle(300).blend(ProductParamsPack,
                                                        maker=maker,
-                                                       abbr=mixer.RANDOM,
+                                                       abbr=(item for product in
+                                                             list(Product.objects.filter(maker=maker).all())
+                                                             for item in
+                                                             ['amount',
+                                                              'weight',
+                                                              'volume',
+                                                              'sizex',
+                                                              'sizey',
+                                                              'sizez']),
                                                        product=(product for product in
-                                                                list(Product.objects.
-                                                                     filter(maker=maker))*5),
-                                                       pack_id=0
-                                                       )
+                                                                list(Product.objects.filter(maker=maker).all())
+                                                                for i in range(0, 6)),
+                                                       pack_id=0)
 
         # Generate a random product params stock
-        product_params_stock_s = mixer.cycle(200).blend(ProductParamsStock,
+        product_params_stock_s = mixer.cycle(250).blend(ProductParamsStock,
                                                         maker=maker,
-                                                        abbr=mixer.RANDOM,
+                                                        abbr=(item for product in
+                                                              list(Product.objects.filter(maker=maker).all())
+                                                              for item in
+                                                              ['amount',
+                                                               'free',
+                                                               'inwayamount',
+                                                               'inwayfree',
+                                                               'enduserprice']),
                                                         product=(product for product in
-                                                                 list(Product.objects.
-                                                                      filter(maker=maker))*5)
-                                                        )
+                                                                 list(Product.objects.filter(maker=maker).all())
+                                                                 for i in range(0, 5)))
 
         # Generate a random product params other
-        product_params_other_s = mixer.cycle(200).blend(ProductParamsOther,
+        product_params_other_s = mixer.cycle(150).blend(ProductParamsOther,
                                                         maker=maker,
-                                                        abbr=mixer.RANDOM,
+                                                        abbr=(item for product in
+                                                              list(Product.objects.filter(maker=maker).all())
+                                                              for item in
+                                                              ['product_size',
+                                                               'weight',
+                                                               'matherial']),
                                                         product=(product for product in
-                                                                 list(Product.objects.
-                                                                      filter(maker=maker))*5)
-                                                        )
+                                                                 list(Product.objects.filter(maker=maker).all())
+                                                                 for i in range(0, 3)))
 
         # Generate a random subproduct attachment
-        subproduct_s = mixer.cycle(200).blend(SubProduct,
+        subproduct_s = mixer.cycle(100).blend(SubProduct,
                                               maker=maker,
                                               code=(str(x) for x in range(1000, 10000, 2)),
                                               product=(product for product in
                                                        list(Product.objects.
-                                                            filter(maker=maker))*5)
-                                              )
+                                                            filter(maker=maker).all())*2))
 
         # Generate a random subproduct params stock
-        subproduct_params_stock_s = mixer.cycle(200).blend(SubProductParamsStock,
+        subproduct_params_stock_s = mixer.cycle(500).blend(SubProductParamsStock,
                                                            maker=maker,
-                                                           abbr=mixer.RANDOM,
+                                                           abbr=(item for subproduct in
+                                                                 list(SubProduct.objects.filter(maker=maker).all())
+                                                                 for item in
+                                                                 ['amount',
+                                                                  'free',
+                                                                  'inwayamount',
+                                                                  'inwayfree',
+                                                                  'enduserprice']),
                                                            sub_product=(subproduct for subproduct in
                                                                         list(SubProduct.objects.
-                                                                             filter(maker=maker))*2),
-                                                           )
+                                                                             filter(maker=maker).all())
+                                                                        for i in range(0, 5)))
 
         # Generate a random subproduct params other
         subproduct_params_other_s = mixer.cycle(200).blend(SubProductParamsOther,
                                                            maker=maker,
-                                                           abbr=mixer.RANDOM,
+                                                           abbr=(item for subproduct in
+                                                                 list(SubProduct.objects.filter(maker=maker).all())
+                                                                 for item in
+                                                                 ['size_code',
+                                                                  'weight']),
                                                            sub_product=(subproduct for subproduct in
                                                                         list(SubProduct.objects.
-                                                                             filter(maker=maker))*2),
-                                                           )
+                                                                             filter(maker=maker).all())
+                                                                        for i in range(0, 2)))
 
     # Generate a random settings
     settings = mixer.blend(Settings)
