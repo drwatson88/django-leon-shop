@@ -32,11 +32,31 @@ class CatalogParamsValidatorMixin(ParamsValidatorMixin):
 
     @staticmethod
     def _order_validator(value, default):
-        return default
+        if value:
+            return value
+        else:
+            return default
 
     @staticmethod
     def _page_no_validator(value, default):
-        return default
+        if value:
+            return value
+        else:
+            return default
+
+    @staticmethod
+    def _page_start_validator(value, default):
+        if value:
+            return value
+        else:
+            return default
+
+    @staticmethod
+    def _page_stop_validator(value, default):
+        if value:
+            return value
+        else:
+            return default
 
     @staticmethod
     def _page_size_validator(value, default):
@@ -51,7 +71,15 @@ class CatalogParamsValidatorMixin(ParamsValidatorMixin):
 
     @staticmethod
     def _product_stock_validator(value, default):
-        return default
+        return value
+
+    @staticmethod
+    def _item_s_validator(value, default):
+        return value
+
+    @staticmethod
+    def _cart_validator(value, default):
+        return value
 
 
 class CatalogBaseView(BaseView):

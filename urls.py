@@ -2,7 +2,7 @@
 
 from django.conf.urls import patterns, url
 
-from catalog.views import ProductListView, ProductInsideView, category_list
+from catalog.views import ProductListView, ProductInsideView, ProductCalcView, category_list
 
 
 # TODO: добавиь переход к старым урлам
@@ -14,6 +14,7 @@ urlpatterns = patterns(
 
     url(r'category/$', category_list, name='category_list'),
     url(r'category/(?P<catalog_slug_title>.*)/$', ProductListView.as_view(), name='product_list'),
+    url(r'product/calc/$', ProductCalcView.as_view(), name='product_calc'),
     url(r'product/(?P<product_slug_title>.*)/$', ProductInsideView.as_view(), name='product_inside'),
 
     # url(r'(?P<catalog_slug_title>.*)/$', 'product_list', name='product_list'),

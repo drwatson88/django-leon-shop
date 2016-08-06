@@ -31,13 +31,22 @@ def main(project_dir):
         Product, ProductAttachment, ProductParamsOther, \
         ProductParamsPack, ProductParamsStock, \
         SubProduct, SubProductParamsOther, SubProductParamsStock, \
-        Status, Settings
+        Status, Settings, OrderReference
 
     # Generate a random maker
     maker_s = mixer.cycle(5).blend(Maker)
 
     # Generate a random status
     status_s = mixer.cycle(5).blend(Status)
+
+    # Create filters
+    i = 0
+    for k, v in {'default': ['По умолчанию', 'title', 0],
+                 'NAZ': ['По названию (А-Я)', 'title', 0],
+                 'NZA': ['По названию (Я-А)', 'title', 1]}.items():
+        OrderReference(name=k, official=v[0], field_name=v[1],
+                       field_order=v[2], position=i).save()
+        i += 1
 
     # Generate a random brand
     brand_s = mixer.cycle(5).blend(Brand)
