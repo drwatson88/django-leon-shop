@@ -41,11 +41,11 @@ def main(project_dir):
 
     # Create filters
     i = 0
-    for k, v in {'default': ['По умолчанию', 'title', 0],
-                 'NAZ': ['По названию (А-Я)', 'title', 0],
-                 'NZA': ['По названию (Я-А)', 'title', 1]}.items():
+    for k, v in {'default': ['По умолчанию', 'title', 0, 0],
+                 'NAZ': ['По названию (А-Я)', 'title', 0, 1],
+                 'NZA': ['По названию (Я-А)', 'title', 1, 2]}.items():
         OrderReference(name=k, official=v[0], field_name=v[1],
-                       field_order=v[2], position=i).save()
+                       field_order=v[2], position=v[3]).save()
         i += 1
 
     # Generate a random brand

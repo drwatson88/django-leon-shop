@@ -15,6 +15,10 @@ PAGE_STEP = 10
 PAGE_SIZE = 20
 GRID_COUNT = 4
 CATEGORY_GRID_COUNT = 6
+MIN_PRICE = 0
+MAX_PRICE = 9999999
+MIN_STOCK = 0
+MAX_STOCK = 9999999
 
 
 class CategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
@@ -96,6 +100,10 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         'page_size': [None, 20],
         'page_start': [None, 20],
         'page_stop': [None, 20],
+        'price_from': [None, MIN_PRICE],
+        'price_to': [None, MAX_PRICE],
+        'stock_from': [None, MIN_STOCK],
+        'stock_to': [None, MAX_STOCK],
         'brand_id_s': [None, []],
     }
 
@@ -143,7 +151,7 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         brand_id_s = brand_id_s if brand_id_s else self.brand_obj_s.\
             values_list('id', flat=True)
         for brand_obj in self.brand_obj_s:
-            if brand_obj.id in brand_id_s:
+            if str(brand_obj.id) in brand_id_s:
                 brand_obj.checked = True
         self.brand_maker_id_s = BrandMaker.objects.filter(brand__in=brand_id_s). \
             values_list('id', flat=True)
@@ -154,13 +162,20 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.product_s = [product_obj_s[k: k + grid_cnt]
                           for k in range(0, len(product_obj_s)//grid_cnt)]
 
-    def _page_s(self, in_page_no, in_page_size, in_page_start, in_page_stop):
+    def _product_obj_s_query(self, price_from, price_to, stock_from, stock_to):
         self.product_obj_s_query = Product.objects.filter(category_xml__in=self.category_xml_s,
-                                                          brand__in=self.brand_maker_id_s)
-        self.product_obj_s_count = len(self.product_obj_s_query)
+                                                          brand__in=self.brand_maker_id_s,
+                                                          price__gte=price_from,
+                                                          price__lte=price_to,
+                                                          stock__gte=stock_from,
+                                                          stock__lte=stock_to
+                                                          )
 
-        self.page_count = self.product_obj_s_count//in_page_size + \
-                          (self.product_obj_s_count % in_page_size > 0)
+    def _page_s(self, in_page_no, in_page_size, in_page_start, in_page_stop):
+        product_obj_s_count = len(self.product_obj_s_query)
+
+        self.page_count = product_obj_s_count//in_page_size + \
+                          (product_obj_s_count % in_page_size > 0)
 
         if in_page_no == 'next':
             self.page_no = int(in_page_stop) + 1
@@ -196,6 +211,10 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self._category_s_query(self.kwargs['catalog_slug_title'])
         self._brand_s_query(self.params_storage['brand_id_s'])
         self._set_order_s(self.params_storage['order'])
+        self._product_obj_s_query(self.params_storage['price_from'],
+                                  self.params_storage['price_to'],
+                                  self.params_storage['stock_from'],
+                                  self.params_storage['stock_to'])
         self._page_s(self.params_storage['page_no'],
                      self.params_storage['page_size'],
                      self.params_storage['page_start'],
@@ -382,10 +401,9 @@ class ProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
         }
         super(ProductCalcView, self).__init__(*args, **kwargs)
         self.item_s = None
-        self.cart_id = None
         self.total_price = None
 
-    def cart_update(self):
+    def calc_update(self):
         self.item_s = json.loads(self.params_storage['item_s'])
         total_price = 0
         for item in self.item_s:
@@ -396,10 +414,9 @@ class ProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
             quantity = int(item['stock'])
             total_price += product.price * quantity
         self.total_price = str(abs(total_price))
-        self.cart_id = self.params_storage['cart']
 
     def get(self, *args, **kwargs):
-        self.cart_update()
+        self.calc_update()
         self._aggregate()
         return HttpResponse(json.dumps(self.output_context))
 
@@ -431,26 +448,34 @@ class ProductCartView(CatalogBaseView, CatalogParamsValidatorMixin):
         'cart': [None, None],
     }
 
+    session_save_slots = {
+        'cart': 'cart_id'
+    }
+
     def __init__(self, *args, **kwargs):
         self.params_storage = {}
         self.output_context = {
         }
         super(ProductCartView, self).__init__(*args, **kwargs)
         self.item_s = None
+        self.cart = None
+        self.cart_id = None
 
     def cart_add_item(self):
         self.item_s = json.loads(self.params_storage['item_s'])
-        cart = Cart(self.params_storage['cart'])
+        self.cart = Cart(self.params_storage['cart'])
+        self.cart_id = self.cart.id
         for item in self.item_s:
-            if item['type'] == 'product':
+            if item['product_type'] == 'product':
                 product = Product.objects.get(pk=item['pk'])
             else:
                 product = SubProduct.objects.get(pk=item['pk'])
             quantity = int(item['stock'])
             if quantity:
-                cart.add(product, quantity, None)
+                self.cart.add(product, quantity, None)
 
     def get(self, *args, **kwargs):
         self.cart_add_item()
+        self._save_cookies()
         self._aggregate()
         return HttpResponse(json.dumps(self.output_context))

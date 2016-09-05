@@ -70,6 +70,34 @@ class CatalogParamsValidatorMixin(ParamsValidatorMixin):
             return default
 
     @staticmethod
+    def _stock_from_validator(value, default):
+        if value and int(value):
+            return value
+        else:
+            return default
+
+    @staticmethod
+    def _stock_to_validator(value, default):
+        if value and int(value):
+            return value
+        else:
+            return default
+
+    @staticmethod
+    def _price_from_validator(value, default):
+        if value and int(value):
+            return value
+        else:
+            return default
+
+    @staticmethod
+    def _price_to_validator(value, default):
+        if value and int(value):
+            return value
+        else:
+            return default
+
+    @staticmethod
     def _product_stock_validator(value, default):
         return value
 

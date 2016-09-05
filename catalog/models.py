@@ -331,8 +331,7 @@ class SubProduct(models.Model):
 
     title = models.CharField(verbose_name='Заголовок', max_length=255)
     code = models.CharField(verbose_name='Артикул', max_length=50)
-    model_name = models.DecimalField(verbose_name='Название ', decimal_places=2,
-                                     max_digits=10, null=True)
+    model_name = models.CharField(verbose_name='Название ', max_length=50)
     sub_product_id = models.CharField(verbose_name='ИД', max_length=50)
     main_product_id = models.CharField(verbose_name='ИД родителя', max_length=50)
 
