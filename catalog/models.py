@@ -2,11 +2,13 @@
 
 import os
 
-from django.db import models
 from smart_selects.db_fields import ChainedForeignKey
 from treebeard.mp_tree import MP_Node
 from pytils.translit import slugify
 import hashlib
+
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
 
 
 class Maker(models.Model):
@@ -259,8 +261,9 @@ class Product(models.Model):
     def photos(self):
         return ProductAttachment.objects.filter(product=self, meaning=1)
 
-    def get_type(self):
-        return 1
+    @staticmethod
+    def get_model_id():
+        return ContentType.objects.get(app_label='catalog', model='product').id
 
     def save(self, **kwargs):
         if not self.id and not self.import_fl:
@@ -341,8 +344,9 @@ class SubProduct(models.Model):
     price = models.DecimalField(verbose_name='Цена', decimal_places=2,
                                 max_digits=10, null=True)
 
-    def get_type(self):
-        return 0
+    @staticmethod
+    def get_model_id():
+        return ContentType.objects.get(app_label='catalog', model='subproduct').id
 
     def save(self, **kwargs):
         if not self.id:
