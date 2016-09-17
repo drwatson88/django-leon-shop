@@ -265,6 +265,9 @@ class Product(models.Model):
     def get_model_id():
         return ContentType.objects.get(app_label='catalog', model='product').id
 
+    def get_model_name(self):
+        return ContentType.objects.get_for_model(self)
+
     def save(self, **kwargs):
         if not self.id and not self.import_fl:
             self.code = self.code or self.default_code()
@@ -347,6 +350,9 @@ class SubProduct(models.Model):
     @staticmethod
     def get_model_id():
         return ContentType.objects.get(app_label='catalog', model='subproduct').id
+
+    def get_model_name(self):
+        return ContentType.objects.get_for_model(self)
 
     def save(self, **kwargs):
         if not self.id:
