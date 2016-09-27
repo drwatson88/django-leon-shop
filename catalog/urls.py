@@ -10,7 +10,7 @@ from catalog.views import ProductListView, ProductInsideView, \
 urlpatterns = patterns(
     'catalog.views',
 
-    url(r'category/$', CategoryListView.as_view(), name='category_list'),
+    url(r'$', CategoryListView.as_view(), name='category_list'),
     url(r'category/(?P<catalog_slug_title>.*)/$', ProductListView.as_view(), name='product_list'),
     url(r'product/calc/$', ProductCalcView.as_view(), name='product_calc'),
     url(r'product/cart/$', ProductCartView.as_view(), name='product_cart'),
