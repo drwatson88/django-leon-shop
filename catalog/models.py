@@ -75,7 +75,7 @@ class CategorySite(MP_Node):
     position = models.IntegerField(verbose_name='Позиция', blank=True, null=True)
 
     content_seo = models.TextField(verbose_name='Описание для SEO', blank=True, null=True)
-    name_seo = models.CharField(verbose_name='Заголовок для SEO', max_length=255, blank=True,
+    title_seo = models.CharField(verbose_name='Заголовок для SEO', max_length=255, blank=True,
                                 null=True)
     meta_key = models.CharField(verbose_name='Meta key', max_length=255, blank=True,
                                 null=True)
