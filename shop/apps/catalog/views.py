@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import json
-
+from digg_paginator import DiggPaginator
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
 
-from .models import CategorySite, Product, SubProduct, Brand, BrandMaker, OrderReference
+from cart.cart import Cart
+from .models import CategorySite, Product, Brand, BrandMaker, PrintType, \
+    PrintTypeMaker, OrderReference
 from .base import CatalogBaseView, CatalogParamsValidatorMixin
 
-from cart.cart import Cart
 
-
-PAGE_STEP = 10
 PAGE_SIZE = 20
-GRID_COUNT = 4
 CATEGORY_GRID_COUNT = 6
 MIN_PRICE = 0
 MAX_PRICE = 9999999
@@ -85,106 +83,64 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         ALL PARAMS put in params_storage after validate
     """
 
+    page_size = PAGE_SIZE
+
     kwargs_params_slots = {
         'catalog_slug_title': [None, ''],
     }
 
     request_params_slots = {
-        'ajax': [None, 0],
-        'grid': [None, 1],
-        'grid_cnt': [None, GRID_COUNT],
         'order': [None, 'default'],
-        'page_no': [None, 1],
-        'page_size': [None, 20],
-        'page_start': [None, 20],
-        'page_stop': [None, 20],
+
+        'page': [None, 1],
+
         'price_from': [None, MIN_PRICE],
         'price_to': [None, MAX_PRICE],
+
         'stock_from': [None, MIN_STOCK],
         'stock_to': [None, MAX_STOCK],
+
         'brand_id_s': [None, []],
+        'print_type_id_s': [None, []],
     }
 
     def __init__(self, *args, **kwargs):
         self.params_storage = {}
         self.output_context = {
-            'root_category_s': None,
-            'current_category': None,
-            'parent_category': None,
-            'category_xml_s': None,
-            'children_category_s': None,
-            'brand_obj_s': None,
-            'product_s': None,
-            'order_s': None,
-            'page_s': None,
-            'page_start': None,
-            'page_stop': None,
-            'page_count': None
+            'page': None,
         }
         super(ProductListView, self).__init__(*args, **kwargs)
 
     def _category_s_query(self):
-        self.current_category = CategorySite.objects.filter(
+        current_category = CategorySite.objects.filter(
                 slug_title=self.params_storage['catalog_slug_title']).first()
-        self.parent_category = self.current_category.get_parent()
 
         self.category_xml_s = list(self.current_category.category_xml_s.all().
                                    values_list('id', flat=True))
-        self.children_category_s = self.parent_category.getchildrens()
-        for cat in self.children_category_s:
-            if self.parent_category.id == self.current_category.id:
-                self.category_xml_s.extend(cat.category_xml_s.all().
-                                           values_list('id', flat=True))
-            cat.selected = True if cat.id == self.current_category.id else False
+        for cat in current_category.get_childrens():
+            self.category_xml_s.extend(cat.category_xml_s.all().
+                                       values_list('id', flat=True))
 
-    def _brand_s_query(self, brand_id_s):
+    def _brand_s_query(self):
+        brand_id_s = self.params_storage['brand_id_s']
         self.brand_obj_s = Brand.objects.all()
-        brand_id_s = brand_id_s if brand_id_s else self.brand_obj_s.\
-            values_list('id', flat=True)
         for brand_obj in self.brand_obj_s:
             if str(brand_obj.id) in brand_id_s:
                 brand_obj.checked = True
         self.brand_maker_id_s = BrandMaker.objects.filter(brand__in=brand_id_s). \
             values_list('id', flat=True)
 
-    def _product_s_query(self, page_size, order, grid_cnt):
-        product_obj_s = self.product_obj_s_query.\
-            order_by(order)[(self.page_no-1)*page_size: self.page_no*page_size]
-        self.product_s = [product_obj_s[k: k + grid_cnt]
-                          for k in range(0, len(product_obj_s)//grid_cnt)]
+    def _print_type_s_query(self):
+        print_type_id_s = self.params_storage['print_type_id_s']
+        self.print_type_obj_s = PrintType.objects.all()
+        for print_type_obj in self.print_type_obj_s:
+            if str(print_type_obj.id) in print_type_id_s:
+                print_type_obj.checked = True
+        self.print_type_maker_id_s = PrintTypeMaker.objects.filter(print_type__in=print_type_id_s). \
+            values_list('id', flat=True)
 
-    def _product_obj_s_query(self, price_from, price_to, stock_from, stock_to):
-        self.product_obj_s_query = Product.objects.filter(category_xml__in=self.category_xml_s,
-                                                          brand__in=self.brand_maker_id_s,
-                                                          price__gte=price_from,
-                                                          price__lte=price_to,
-                                                          stock__gte=stock_from,
-                                                          stock__lte=stock_to
-                                                          )
-
-    def _page_s(self, in_page_no, in_page_size, in_page_start, in_page_stop):
-        product_obj_s_count = len(self.product_obj_s_query)
-
-        self.page_count = product_obj_s_count//in_page_size + \
-                          (product_obj_s_count % in_page_size > 0)
-
-        if in_page_no == 'next':
-            self.page_no = int(in_page_stop) + 1
-        elif in_page_no == 'prev':
-            self.page_no = int(in_page_start) - 1
-        else:
-            self.page_no = int(in_page_no)
-
-        if self.page_count < self.page_no or 0 >= self.page_no:
-            self.page_no = 1
-        self.page_start = (self.page_no//PAGE_STEP)*PAGE_STEP + 1
-        self.page_stop = min((self.page_no//PAGE_STEP + 1)*PAGE_STEP, self.page_count)
-        self.page_s = [
-            {
-                'id': k, 'active': (True if k == self.page_no else False)
-            } for k in range(self.page_start, self.page_stop + 1)]
-
-    def _set_order_s(self, order):
+    def _set_order_s(self):
+        order = self.params_storage['order']
         self.order_s = OrderReference.objects.order_by('-position').all()
         for order_obj in self.order_s:
             order_obj.selected = False
@@ -194,35 +150,49 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.order_name = order_selected.field_name \
             if order_selected.field_order else '-{}'.format(order_selected.field_name)
 
+    def _product_obj_s_query(self):
+        self.product_obj_s_query = Product.objects.filter(category_xml__in=self.category_xml_s)
+
+    def _product_filter(self):
+        self.product_obj_s_query = Product.objects.filter(category_xml__in=self.category_xml_s)
+
+        filter_s = {
+            'brand__in': self.brand_maker_id_s,
+            'print_type__in': self.print_type_maker_id_s,
+
+            'price__gte': self.params_storage['price_from'],
+            'price__lte': self.params_storage['price_to'],
+
+            'stock__gte': self.params_storage['stock_from'],
+            'stock__lte': self.params_storage['stock_to']
+        }
+
+        for k, v in filter_s:
+            if v:
+                self.product_obj_s_query = self.product_obj_s_query.filter(**{k: v})
+        self.product_obj_s_query = self.product_obj_s_query.order_by(self.order_name).all()
+
+    def _product_s_query(self):
+        paginator = DiggPaginator(self.product_obj_s_query, self.page_size)
+        self.page = paginator.page(self.params_storage['page'] or 1)
+
     def _aggregate(self):
         for item in self.output_context:
             self.output_context[item] = getattr(self, item)
 
     def get(self, *args, **kwargs):
         self._category_s_query()
-        self._brand_s_query(self.params_storage['brand_id_s'])
-        self._set_order_s(self.params_storage['order'])
-        self._product_obj_s_query(self.params_storage['price_from'],
-                                  self.params_storage['price_to'],
-                                  self.params_storage['stock_from'],
-                                  self.params_storage['stock_to'])
-        self._page_s(self.params_storage['page_no'],
-                     self.params_storage['page_size'],
-                     self.params_storage['page_start'],
-                     self.params_storage['page_stop'])
-        self._product_s_query(self.params_storage['page_size'],
-                              self.order_name, self.params_storage['grid_cnt'])
+        self._brand_s_query()
+        self._print_type_s_query()
+        self._set_order_s()
+        self._product_obj_s_query()
+        self._product_filter()
+        self._product_s_query()
         self._aggregate()
-        if not self.params_storage['ajax']:
-            return render_to_response(
-                'shop/blocks/catalog/product_list_general.html',
-                self.output_context,
-                context_instance=RequestContext(self.request), )
-        else:
-            return render_to_response(
-                'shop/blocks/catalog/product_list_ajax.html',
-                self.output_context,
-                context_instance=RequestContext(self.request), )
+        return render_to_response(
+            self.get_template_name(),
+            self.output_context,
+            context_instance=RequestContext(self.request), )
 
 
 class ProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):

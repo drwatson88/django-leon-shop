@@ -343,6 +343,21 @@ class ProductAttachment(models.Model):
         return self.desc
 
 
+class OrderReference(models.Model):
+
+    name = models.CharField(verbose_name='Тип порядка сортировки продукта',
+                            max_length=255, unique=True)
+    official = models.CharField(verbose_name='Наименование типа порядка '
+                                             'сортировки продукта', max_length=255)
+    field_name = models.CharField(verbose_name='Поле сортировки продукта', max_length=30)
+    field_order = models.BooleanField(verbose_name='Порядок сортировки')
+    position = models.IntegerField(verbose_name='Позиция в списке')
+
+    class Meta:
+        verbose_name = 'Тип порядка сортировки продукта'
+        verbose_name_plural = 'Типы порядков сортировки продукта'
+
+
 class Settings(models.Model):
 
     title = models.CharField(verbose_name='Заголовок раздела', max_length=128)
