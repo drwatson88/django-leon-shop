@@ -48,13 +48,7 @@ class CategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
         super(CategoryListView, self).__init__(*args, **kwargs)
 
     def _category_s_query(self, ):
-        self.root_category_s = list()
-        root_category_s_prev = CategorySite.get_root_nodes().filter(show=True).all()
-
-        p = 0
-        while p < len(root_category_s_prev):
-            self.root_category_s.append(root_category_s_prev[p:p+CATEGORY_GRID_COUNT])
-            p += CATEGORY_GRID_COUNT
+        self.root_category_s = CategorySite.get_root_nodes().filter(show=True).all()
 
     def _aggregate(self):
         for item in self.output_context:
@@ -64,7 +58,7 @@ class CategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self._category_s_query()
         self._aggregate()
         return render_to_response(
-            'shop/blocks/catalog/category_list.html',
+            self._get_template(),
             self.output_context,
             context_instance=RequestContext(self.request), )
 
@@ -90,6 +84,10 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
 
         ALL PARAMS put in params_storage after validate
     """
+
+    kwargs_params_slots = {
+        'catalog_slug_title': [None, ''],
+    }
 
     request_params_slots = {
         'ajax': [None, 0],
@@ -125,17 +123,10 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         }
         super(ProductListView, self).__init__(*args, **kwargs)
 
-    def _category_s_query(self, catalog_slug_title):
-        self.root_category_s = CategorySite.get_root_nodes()
+    def _category_s_query(self):
         self.current_category = CategorySite.objects.filter(
-                slug_title=catalog_slug_title)[0]
+                slug_title=self.params_storage['catalog_slug_title']).first()
         self.parent_category = self.current_category.get_parent()
-
-        if not self.parent_category:
-            self.parent_category = self.current_category
-            self.parent_category.selected = True
-        else:
-            self.parent_category.selected = False
 
         self.category_xml_s = list(self.current_category.category_xml_s.all().
                                    values_list('id', flat=True))
@@ -208,7 +199,7 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
             self.output_context[item] = getattr(self, item)
 
     def get(self, *args, **kwargs):
-        self._category_s_query(self.kwargs['catalog_slug_title'])
+        self._category_s_query()
         self._brand_s_query(self.params_storage['brand_id_s'])
         self._set_order_s(self.params_storage['order'])
         self._product_obj_s_query(self.params_storage['price_from'],

@@ -109,6 +109,10 @@ class CatalogParamsValidatorMixin(ParamsValidatorMixin):
     def _cart_validator(value, default):
         return value
 
+    @staticmethod
+    def _catalog_slug_title_validator(value, default):
+        return value
+
 
 class CatalogBaseView(BaseView):
 
