@@ -7,11 +7,12 @@ from treebeard.mp_tree import MP_Node
 from pytils.translit import slugify
 import hashlib
 
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+from leon.apps.base.models import BaseStatusMixin
 
-class Maker(models.Model):
+
+class ShopMaker(models.Model):
 
     name = models.CharField(verbose_name='Поставщик', max_length=255, unique=True)
     official = models.CharField(verbose_name='Наименование поставщика', max_length=255)
@@ -19,7 +20,7 @@ class Maker(models.Model):
     def save(self, **kwargs):
         if not self.id:
             self.name = slugify(self.official)
-        super(Maker, self).save(**kwargs)
+        super(ShopMaker, self).save(**kwargs)
 
     class Meta:
         abstract = True
@@ -30,14 +31,14 @@ class Maker(models.Model):
         return self.official
 
 
-class Brand(models.Model):
+class ShopBrand(models.Model):
     name = models.CharField(verbose_name='Бренд', max_length=255, unique=True)
     official = models.CharField(verbose_name='Наименование бренда', max_length=255)
 
     def save(self, **kwargs):
         if not self.id:
             self.name = slugify(self.official)
-        super(Brand, self).save(**kwargs)
+        super(ShopBrand, self).save(**kwargs)
 
     class Meta:
         abstract = True
@@ -48,14 +49,14 @@ class Brand(models.Model):
         return self.official
 
 
-class BrandMaker(models.Model):
+class ShopBrandMaker(models.Model):
     """
     Additions:
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
     """
     title = models.CharField(verbose_name='Наименование', max_length=255, blank=True)
     code = models.CharField(verbose_name='Код', max_length=255, blank=True)
-    brand = models.ForeignKey(Brand, verbose_name='Бренд на сайте', null=True, blank=True)
+    brand = models.ForeignKey(ShopBrand, verbose_name='Бренд на сайте', null=True, blank=True)
     prov_brand_id = models.CharField(verbose_name='ИД', max_length=255, blank=True)
 
     class Meta:
@@ -68,7 +69,7 @@ class BrandMaker(models.Model):
         return u'{} ({})'.format(self.title, self.maker)
 
 
-class CategorySite(MP_Node):
+class ShopCategorySite(MP_Node):
 
     title = models.CharField(verbose_name='Заголовок', max_length=255)
     slug_title = models.SlugField(verbose_name='Имя для ссылки', unique=True, blank=True)
@@ -79,12 +80,12 @@ class CategorySite(MP_Node):
     position = models.IntegerField(verbose_name='Позиция', blank=True, null=True)
 
     def get_children(self):
-        return CategorySite.get_children(self).filter(show=True)
+        return ShopCategorySite.get_children(self).filter(show=True)
 
     def save(self, **kwargs):
         if not self.id:
             self.slug_title = slugify(self.title)
-        super(CategorySite, self).save(**kwargs)
+        super(ShopCategorySite, self).save(**kwargs)
 
     class Meta:
         abstract = True
@@ -95,7 +96,7 @@ class CategorySite(MP_Node):
         return '{}{}'.format((self.depth - 1) * '---', self.slug_title)
 
 
-class CategoryXML(MP_Node):
+class ShopCategoryXML(MP_Node, BaseStatusMixin):
     """
     Additions:
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
@@ -108,7 +109,6 @@ class CategoryXML(MP_Node):
 
     title = models.CharField(verbose_name='Заголовок', max_length=255, blank=False)
     cat_id = models.CharField(verbose_name='ИД', max_length=100)
-    status = models.ForeignKey('Status', verbose_name='Статус', blank=True, null=True)
     import_fl = models.BooleanField(verbose_name='Импортирован в базу', default=False)
 
     class Meta:
@@ -120,32 +120,13 @@ class CategoryXML(MP_Node):
     def save(self, **kwargs):
         if not self.id and not self.import_fl:
             self.cat_id = self.default_cat_id()
-        super(CategoryXML, self).save()
+        super(ShopCategoryXML, self).save()
 
     def __str__(self):
         return u'{}{} ({})'.format((self.depth - 1) * u'---', self.title, self.maker)
 
 
-class Status(models.Model):
-
-    name = models.CharField(verbose_name='Статус', max_length=255, unique=True)
-    official = models.CharField(verbose_name='Наименование статуса', max_length=255)
-
-    def save(self, **kwargs):
-        if not self.id:
-            self.name = slugify(self.official)
-        super(Status, self).save(**kwargs)
-
-    def __str__(self):
-        return self.official
-
-    class Meta:
-        abstract = True
-        verbose_name = 'Статус'
-        verbose_name_plural = 'Статусы'
-
-
-class ProductType(models.Model):
+class ShopProductType(models.Model):
 
     name = models.CharField(verbose_name='Тип продукта', max_length=255, unique=True)
     official = models.CharField(verbose_name='Наименование тип продукта', max_length=255)
@@ -153,7 +134,7 @@ class ProductType(models.Model):
     def save(self, **kwargs):
         if not self.id:
             self.name = slugify(self.official)
-        super(ProductType, self).save(**kwargs)
+        super(ShopProductType, self).save(**kwargs)
 
     def __str__(self):
         return self.official
@@ -164,7 +145,7 @@ class ProductType(models.Model):
         verbose_name_plural = 'Тип продукта'
 
 
-class Product(models.Model):
+class ShopProduct(models.Model):
     """
     Additions:
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
@@ -215,16 +196,16 @@ class Product(models.Model):
         return self.children_set
 
     def photo_s(self):
-        return ProductAttachment.objects.filter(product=self, meaning=1).all()
+        return ShopProductAttachment.objects.filter(product=self, meaning=1).all()
 
     def main_image(self):
-        return ProductAttachment.objects.filter(product=self, meaning=1, position=0).first()
+        return ShopProductAttachment.objects.filter(product=self, meaning=1, position=0).first()
 
     def save(self, **kwargs):
         if not self.id and not self.import_fl:
             self.code = self.code or self.default_code()
             self.slug_title = self.default_slug_title()
-        super(Product, self).save()
+        super(ShopProduct, self).save()
 
     class Meta:
         abstract = True
@@ -237,7 +218,7 @@ class Product(models.Model):
         return self.title
 
 
-class ProductPackKV(models.Model):
+class ShopProductPackKV(models.Model):
     """
     Additions:
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
@@ -256,7 +237,7 @@ class ProductPackKV(models.Model):
         unique_together = ('product', 'pack_id', 'abbr')
 
 
-class ProductStock(models.Model):
+class ShopProductStock(models.Model):
     """
     Additions:
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
@@ -272,7 +253,7 @@ class ProductStock(models.Model):
         unique_together = ('product', 'abbr')
 
 
-class ProductParamsKV(models.Model):
+class ShopProductParamsKV(models.Model):
     """
     Additions:
     product = models.ForeignKey(Product, verbose_name='Товар', related_name='params_kv')
@@ -288,7 +269,7 @@ class ProductParamsKV(models.Model):
         unique_together = ('product', 'abbr')
 
 
-class ProductAttachment(models.Model):
+class ShopProductAttachment(models.Model):
     """
     Additions:
     maker = models.ForeignKey(Maker, verbose_name='Поставщик')
@@ -318,7 +299,7 @@ class ProductAttachment(models.Model):
 
     def save(self, **kwargs):
         self.maker = self.product.maker
-        super(ProductAttachment, self).save()
+        super(ShopProductAttachment, self).save()
 
     def __str__(self):
         return self.desc
@@ -329,7 +310,7 @@ class ProductAttachment(models.Model):
         verbose_name_plural = 'Файлы (изображения)'
 
 
-class Filter(models.Model):
+class ShopFilter(models.Model):
 
     TYPE_CHOICES = (
         ('PRICE', 'Цена'),
@@ -343,8 +324,7 @@ class Filter(models.Model):
     name = models.CharField(verbose_name='Наименование фильтра', max_length=255)
     value = models.CharField(verbose_name='Значение поля фильтра',
                              max_length=50, unique=True)
-    type = models.CharField(verbose_name='Значение поля фильтра',
-                            max_length=50, unique=True)
+    type = models.CharField(verbose_name='Значение поля фильтра', choices=TYPE_CHOICES, unique=True)
     position = models.IntegerField(verbose_name='Позиция в списке')
 
     class Meta:

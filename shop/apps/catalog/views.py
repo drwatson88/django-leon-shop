@@ -20,7 +20,7 @@ MIN_STOCK = 0
 MAX_STOCK = 9999999
 
 
-class CategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopCategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
 
     """ Category List View. Receives get params
         and response neither arguments in get
@@ -57,7 +57,7 @@ class CategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
         return self._render()
 
 
-class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
 
     """ Product List View. Receives get params
         and response neither arguments in get
@@ -210,7 +210,7 @@ class ProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         return self._render()
 
 
-class ProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
 
     """ Product Inside View. Receives get params
         and response neither arguments in get
@@ -293,7 +293,7 @@ class ProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
         return self._render()
 
 
-class ProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
 
     """ Product Inside View. Receives get params
         and response neither arguments in get
