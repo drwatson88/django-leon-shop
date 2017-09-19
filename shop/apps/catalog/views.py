@@ -46,7 +46,7 @@ class ShopCategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.output_context = {
             'catalog_root_category_s': None
         }
-        super(CategoryListView, self).__init__(*args, **kwargs)
+        super(ShopCategoryListView, self).__init__(*args, **kwargs)
 
     def _category_s_query(self, ):
         self.root_category_s = self.CATEGORY_SITE_MODEL.get_root_nodes().filter(show=True).all()
@@ -112,7 +112,7 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.output_context = {
             'page': None,
         }
-        super(ProductListView, self).__init__(*args, **kwargs)
+        super(ShopProductListView, self).__init__(*args, **kwargs)
 
     def _category_s_query(self):
         current_category = self.CATEGORY_SITE_MODEL.objects.filter(
@@ -239,7 +239,7 @@ class ShopProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.output_context = {
             'product': None
         }
-        super(ProductInsideView, self).__init__(*args, **kwargs)
+        super(ShopProductInsideView, self).__init__(*args, **kwargs)
 
     def _set_product(self):
         self.product = get_object_or_404(self.PRODUCT_MODEL,
@@ -322,7 +322,7 @@ class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.output_context = {
             'total_price': None
         }
-        super(ProductCalcView, self).__init__(*args, **kwargs)
+        super(ShopProductCalcView, self).__init__(*args, **kwargs)
         self.item_s = None
         self.total_price = None
 

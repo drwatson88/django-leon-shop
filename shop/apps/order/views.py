@@ -1,11 +1,10 @@
 # coding: utf-8
 
 
-import json
 from .base import OrderBaseView, OrderParamsValidatorMixin
 
 
-class OrderView(OrderBaseView, OrderParamsValidatorMixin):
+class ShopOrderView(OrderBaseView, OrderParamsValidatorMixin):
     """ Category List View. Receives get params
         and response neither arguments in get
         request params.
@@ -28,7 +27,7 @@ class OrderView(OrderBaseView, OrderParamsValidatorMixin):
         self.output_context = {
             '': None
         }
-        super(OrderView, self).__init__(*args, **kwargs)
+        super(ShopOrderView, self).__init__(*args, **kwargs)
 
     def done(self, form_list, **kwargs):
         pass

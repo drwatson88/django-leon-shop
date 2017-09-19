@@ -11,9 +11,9 @@ from catalog.models import PrintType
 from .base import BasketBaseView, BasketParamsValidatorMixin
 
 
-class BasketList(BasketBaseView, BasketParamsValidatorMixin):
+class ShopBasketInsideView(BasketBaseView, BasketParamsValidatorMixin):
 
-    """ Basket List View. Receives get params
+    """ Basket Inside View. Receives get params
         and response neither arguments in get
         request params.
 
@@ -53,7 +53,7 @@ class BasketList(BasketBaseView, BasketParamsValidatorMixin):
             'cart': None,
             'total_price': None
         }
-        super(BasketList, self).__init__(*args, **kwargs)
+        super(ShopBasketListView, self).__init__(*args, **kwargs)
 
     def _set_item_s(self):
         self.item_s = self.params_storage['item_s']
@@ -76,7 +76,7 @@ class BasketList(BasketBaseView, BasketParamsValidatorMixin):
         return self._render()
 
 
-class BasketMenu(BasketBaseView, BasketParamsValidatorMixin):
+class ShopBasketMenuView(BasketBaseView, BasketParamsValidatorMixin):
 
     """ Basket Menu View. Receives get params
         and response neither arguments in get
@@ -117,7 +117,7 @@ class BasketMenu(BasketBaseView, BasketParamsValidatorMixin):
             'basket': None,
             'total_price': None
         }
-        super(BasketMenu, self).__init__(*args, **kwargs)
+        super(ShopBasketMenuView, self).__init__(*args, **kwargs)
 
     def _set_cart(self):
         self.basket = self.BASKET_MODEL(self.params_storage['basket'])
@@ -137,7 +137,7 @@ class BasketMenu(BasketBaseView, BasketParamsValidatorMixin):
         return self._render()
 
 
-class BasketCalc(BasketBaseView, BasketParamsValidatorMixin):
+class ShopBasketCalcView(BasketBaseView, BasketParamsValidatorMixin):
 
     """ Basket List View. Receives get params
         and response neither arguments in get
@@ -179,7 +179,7 @@ class BasketCalc(BasketBaseView, BasketParamsValidatorMixin):
             'item_s': None,
             'total_price': None
         }
-        super(BasketCalc, self).__init__(*args, **kwargs)
+        super(ShopBasketCalcView, self).__init__(*args, **kwargs)
 
     def _set_item_s(self):
         self.item_s = self.params_storage['item_s']

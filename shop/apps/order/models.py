@@ -4,7 +4,7 @@
 from django.db import models
 
 
-class Order(models.Model):
+class ShopOrder(models.Model):
 
     """
         Additions:

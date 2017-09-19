@@ -1,12 +1,10 @@
 # coding: utf-8
 
+
 from django.db import models
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
-from catalog.models import PrintType
 
 
-class Basket(models.Model):
+class ShopBasket(models.Model):
 
     """
         Additions:
@@ -23,7 +21,7 @@ class Basket(models.Model):
         ordering = (u'-creation_date',)
 
 
-class Item(models.Model):
+class ShopBasketItem(models.Model):
 
     """
         Additions:
