@@ -7,7 +7,7 @@ from django.db import models
 class ShopOrder(models.Model):
 
     """
-        Additions:
+    Additions:
         basket = models.ForeignKey(Cart, blank=False, null=False)
         product = models.ForeignKey(Product, verbose_name='Товар', blank=False, null=False)
     """

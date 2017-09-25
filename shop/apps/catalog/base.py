@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import json
-from leon.base import BaseView, ParamsValidatorMixin
+from leon.apps.base import BaseView, BaseParamsValidatorMixin
 
 
-class CatalogParamsValidatorMixin(ParamsValidatorMixin):
+class CatalogParamsValidatorMixin(BaseParamsValidatorMixin):
 
     """ Mixin with validators for validate
         request parameters.

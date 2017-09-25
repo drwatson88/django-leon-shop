@@ -6,9 +6,7 @@ from django.utils.decorators import classonlymethod
 from django.template import RequestContext
 from django.shortcuts import render, get_object_or_404, HttpResponse
 
-from cart.cart import Cart
-from .models import CategorySite, Product, Brand, BrandMaker, PrintType, \
-    PrintTypeMaker, OrderReference
+from .models import ShopCategorySite, ShopProduct, ShopBrand, ShopBrandMaker, OrderReference
 from .base import CatalogBaseView, CatalogParamsValidatorMixin
 
 
@@ -49,11 +47,10 @@ class ShopCategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
         super(ShopCategoryListView, self).__init__(*args, **kwargs)
 
     def _category_s_query(self, ):
-        self.root_category_s = self.CATEGORY_SITE_MODEL.get_root_nodes().filter(show=True).all()
+        self.catalog_root_category_s = self.CATEGORY_SITE_MODEL.get_root_nodes().filter(show=True).all()
 
     def get(self, *args, **kwargs):
         self._category_s_query()
-        self._aggregate()
         return self._render()
 
 
@@ -330,7 +327,7 @@ class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.item_s = json.loads(self.params_storage['item_s'])
         total_price = 0
         for item in self.item_s:
-            product = Product.objects.get(pk=item['pk'])
+            product = ShopProduct.objects.get(pk=item['pk'])
             quantity = int(item['stock'])
             total_price += product.price * quantity
         self.total_price = str(abs(total_price))

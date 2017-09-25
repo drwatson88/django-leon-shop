@@ -52,16 +52,17 @@ class ShopBrand(models.Model):
 class ShopBrandMaker(models.Model):
     """
     Additions:
-    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+        maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+        brand = models.ForeignKey(ShopBrand, verbose_name='Бренд на сайте', null=True, blank=True)
+        
+        unique_together = ('maker', 'title')
     """
     title = models.CharField(verbose_name='Наименование', max_length=255, blank=True)
     code = models.CharField(verbose_name='Код', max_length=255, blank=True)
-    brand = models.ForeignKey(ShopBrand, verbose_name='Бренд на сайте', null=True, blank=True)
     prov_brand_id = models.CharField(verbose_name='ИД', max_length=255, blank=True)
 
     class Meta:
         abstract = True
-        unique_together = ('maker', 'title')
         verbose_name = 'Брэнд от поставщика'
         verbose_name_plural = 'Брэнды от поставщика'
 
@@ -99,9 +100,11 @@ class ShopCategorySite(MP_Node):
 class ShopCategoryXML(MP_Node, BaseStatusMixin):
     """
     Additions:
-    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
-    category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
-                                      blank=True, null=True, related_name='category_xml_s')
+        maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+        category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
+                                          blank=True, null=True, related_name='category_xml_s')
+                                          
+        unique_together = ('maker', 'cat_id')
     """
 
     def default_cat_id(self):
@@ -113,7 +116,6 @@ class ShopCategoryXML(MP_Node, BaseStatusMixin):
 
     class Meta:
         abstract = True
-        unique_together = ('maker', 'cat_id')
         verbose_name = 'Категория от поставщика'
         verbose_name_plural = 'Категории от поставщиков'
 
@@ -148,21 +150,23 @@ class ShopProductType(models.Model):
 class ShopProduct(models.Model):
     """
     Additions:
-    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
-    brand = ChainedForeignKey(BrandMaker,
-                              chained_field='maker',
-                              chained_model_field='maker',
-                              show_all=False,
-                              auto_choose=False,
-                              verbose_name='Бренд от поставщика',
-                              blank=True,
-                              null=True)
-    status = models.ForeignKey(Status, verbose_name='Статус', blank=True, null=True)
-    category_xml = models.ManyToManyField(CategoryXML,
-                                          verbose_name=u'Категория для товара',
-                                          blank=True)
-    filters = models.ManyToManyField(Filter, verbose_name='Фильтры', related_name='category',
-                                     blank=True, null=True)
+        maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+        brand = ChainedForeignKey(BrandMaker,
+                                  chained_field='maker',
+                                  chained_model_field='maker',
+                                  show_all=False,
+                                  auto_choose=False,
+                                  verbose_name='Бренд от поставщика',
+                                  blank=True,
+                                  null=True)
+        status = models.ForeignKey(Status, verbose_name='Статус', blank=True, null=True)
+        category_xml = models.ManyToManyField(CategoryXML,
+                                              verbose_name=u'Категория для товара',
+                                              blank=True)
+        filters = models.ManyToManyField(Filter, verbose_name='Фильтры', related_name='category',
+                                         blank=True, null=True)
+                                         
+        unique_together = ('maker', 'code')
     """
 
     def default_slug_title(self):
@@ -209,7 +213,6 @@ class ShopProduct(models.Model):
 
     class Meta:
         abstract = True
-        unique_together = ('maker', 'code')
         ordering = ('price',)
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
@@ -221,8 +224,10 @@ class ShopProduct(models.Model):
 class ShopProductPackKV(models.Model):
     """
     Additions:
-    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
-    product = models.ForeignKey(Product, verbose_name='Товар')
+        maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+        product = models.ForeignKey(Product, verbose_name='Товар')
+        
+        unique_together = ('product', 'pack_id', 'abbr')
     """
 
     pack_id = models.IntegerField(verbose_name='Порядковый номер пакета у товара',
@@ -234,14 +239,15 @@ class ShopProductPackKV(models.Model):
 
     class Meta:
         abstract = True
-        unique_together = ('product', 'pack_id', 'abbr')
 
 
 class ShopProductStock(models.Model):
     """
     Additions:
-    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
-    product = models.ForeignKey(Product, verbose_name='Товар')
+        maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+        product = models.ForeignKey(Product, verbose_name='Товар')
+        
+        unique_together = ('product', 'abbr')
     """
 
     geo = models.CharField(verbose_name='ГеоМетка', max_length=100)
@@ -250,13 +256,14 @@ class ShopProductStock(models.Model):
 
     class Meta:
         abstract = True
-        unique_together = ('product', 'abbr')
 
 
 class ShopProductParamsKV(models.Model):
     """
     Additions:
-    product = models.ForeignKey(Product, verbose_name='Товар', related_name='params_kv')
+        product = models.ForeignKey(Product, verbose_name='Товар', related_name='params_kv')
+        
+        unique_together = ('product', 'abbr')
     """
 
     abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
@@ -266,14 +273,13 @@ class ShopProductParamsKV(models.Model):
 
     class Meta:
         abstract = True
-        unique_together = ('product', 'abbr')
 
 
 class ShopProductAttachment(models.Model):
     """
     Additions:
-    maker = models.ForeignKey(Maker, verbose_name='Поставщик')
-    product = models.ForeignKey(Product, verbose_name='Товар')
+        maker = models.ForeignKey(Maker, verbose_name='Поставщик')
+        product = models.ForeignKey(Product, verbose_name='Товар')
     """
 
     MEANINGS = (
