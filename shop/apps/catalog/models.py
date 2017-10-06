@@ -2,7 +2,6 @@
 
 import os
 
-from smart_selects.db_fields import ChainedForeignKey
 from treebeard.mp_tree import MP_Node
 from pytils.translit import slugify
 import hashlib
@@ -339,7 +338,7 @@ class ShopFilter(models.Model):
         verbose_name_plural = 'Типы порядков сортировки продукта'
 
 
-class OrderReference(models.Model):
+class ShopOrderReference(models.Model):
 
     name = models.CharField(verbose_name='Тип порядка сортировки продукта',
                             max_length=255, unique=True)
