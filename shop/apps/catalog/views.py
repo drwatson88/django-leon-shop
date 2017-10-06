@@ -112,26 +112,27 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         super(ShopProductListView, self).__init__(*args, **kwargs)
 
     def _category_s_query(self):
-        current_category = self.CATEGORY_SITE_MODEL.objects.filter(
-                slug_title=self.params_storage['catalog_slug_title']).first()
+        self.current_category = self.CATEGORY_SITE_MODEL.objects.filter(
+            slug_title=self.params_storage['catalog_slug_title']).first()
+        self.parent_category = self.current_category.get_parent()
 
-        self.category_xml_s = list(current_category.category_xml_s.all().
+        self.category_xml_s = list(self.current_category.category_xml_s.all().
                                    values_list('id', flat=True))
-        for cat in current_category.get_childrens():
+        for cat in self.current_category.get_childrens():
             self.category_xml_s.extend(cat.category_xml_s.all().
                                        values_list('id', flat=True))
 
-    def _product_query(self):
+    def _product_s_query(self):
         self.product_set = self.PRODUCT_MODEL.objects.filter(category_xml__in=self.category_xml_s)
 
-    def _filter_s(self):
+    def _product_s_filter_s(self):
         """
 
         :return: 
         """
 
         self.filter_set = self.current_category.filters.all() or \
-                          self.parent_category.filters.all()
+                          (self.parent_category and self.parent_category.filters.all())
         self.filter_set = self.filter_set.order_by('position')
 
         for filter_obj in self.filter_set:
@@ -149,16 +150,13 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
                 json_value = json.loads(filter_obj.value)
                 filter_value = self.params_storage.get(filter_obj.name) or \
                                (json_value['filter'] and self.params_storage[json_value['filter']])
-
                 if filter_value:
                     self.product_set = self.product_set.\
                         filter(**{'{abbr}__value'.format(abbr=filter_obj.name): filter_value})
-
             if filter_obj.type == 'KV':
                 json_value = json.loads(filter_obj.value)
                 filter_value = self.params_storage.get(filter_obj.name) or \
                                (json_value['filter'] and self.params_storage[json_value['filter']])
-
                 if filter_value:
                     product_id_s = self.product_set.values_list('id', flat=True)
                     product_kv_id_s = self.CATALOG_PRODUCT_PARAMS_KV_MODEL.objects. \
@@ -187,22 +185,17 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         order_selected = self.ORDER_REFERENCE_MODEL.objects.get(name=order)
         self.order_name = order_selected.field_name \
             if order_selected.field_order else '-{}'.format(order_selected.field_name)
+        self.product_set = self.product_set.order_by(self.order_name)
 
-    def _product_obj_s_query(self):
-        self.product_obj_s_query = self.PRODUCT_MODEL.objects.filter(category_xml__in=self.category_xml_s)
-
-    def _product_s_query(self):
-        paginator = DiggPaginator(self.product_obj_s_query, self.page_size)
+    def _product_s_pagination(self):
+        paginator = DiggPaginator(self.product_set, self.page_size)
         self.page = paginator.page(self.params_storage['page'] or 1)
 
     def get(self, *args, **kwargs):
         self._category_s_query()
-        self._brand_s_query()
-        self._print_type_s_query()
-        self._set_order_s()
-        self._product_obj_s_query()
-        self._product_filter()
         self._product_s_query()
+        self._set_order_s()
+        self._product_s_filter_s()
         self._aggregate()
         return self._render()
 

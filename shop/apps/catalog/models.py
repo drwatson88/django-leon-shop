@@ -102,6 +102,8 @@ class ShopCategoryXML(MP_Node, BaseStatusMixin):
         maker = models.ForeignKey(Maker, verbose_name='Поставщик')
         category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
                                           blank=True, null=True, related_name='category_xml_s')
+        filters = models.ManyToManyField(Filter, verbose_name='Фильтры', related_name='category',
+                                         blank=True, null=True)
                                           
         unique_together = ('maker', 'cat_id')
     """
@@ -162,8 +164,6 @@ class ShopProduct(models.Model):
         category_xml = models.ManyToManyField(CategoryXML,
                                               verbose_name=u'Категория для товара',
                                               blank=True)
-        filters = models.ManyToManyField(Filter, verbose_name='Фильтры', related_name='category',
-                                         blank=True, null=True)
                                          
         unique_together = ('maker', 'code')
     """
