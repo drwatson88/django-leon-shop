@@ -129,25 +129,6 @@ class ShopCategoryXML(MP_Node, BaseStatusMixin):
         return u'{}{} ({})'.format((self.depth - 1) * u'---', self.title, self.maker)
 
 
-class ShopProductType(models.Model):
-
-    name = models.CharField(verbose_name='Тип продукта', max_length=255, unique=True)
-    official = models.CharField(verbose_name='Наименование тип продукта', max_length=255)
-
-    def save(self, **kwargs):
-        if not self.id:
-            self.name = slugify(self.official)
-        super(ShopProductType, self).save(**kwargs)
-
-    def __str__(self):
-        return self.official
-
-    class Meta:
-        abstract = True
-        verbose_name = 'Тип продукта'
-        verbose_name_plural = 'Тип продукта'
-
-
 class ShopProduct(models.Model):
     """
     Additions:
@@ -277,7 +258,6 @@ class ShopProductParamsKV(models.Model):
 class ShopProductAttachment(models.Model):
     """
     Additions:
-        maker = models.ForeignKey(Maker, verbose_name='Поставщик')
         product = models.ForeignKey(Product, verbose_name='Товар')
     """
 
