@@ -2,11 +2,8 @@
 
 import json
 from digg_paginator import DiggPaginator
-from django.utils.decorators import classonlymethod
-from django.template import RequestContext
-from django.shortcuts import render, get_object_or_404, HttpResponse
+from django.shortcuts import get_object_or_404, HttpResponse
 
-from .models import ShopCategorySite, ShopProduct, ShopBrand, ShopBrandMaker, OrderReference
 from .base import CatalogBaseView, CatalogParamsValidatorMixin
 
 
@@ -301,6 +298,8 @@ class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
         ALL PARAMS put in params_storage after validate
     """
 
+    PRODUCT_MODEL = None
+
     request_params_slots = {
         'ajax': [None, 0],
         'item_s': [None, 0],
@@ -320,7 +319,7 @@ class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.item_s = json.loads(self.params_storage['item_s'])
         total_price = 0
         for item in self.item_s:
-            product = ShopProduct.objects.get(pk=item['pk'])
+            product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])
             quantity = int(item['stock'])
             total_price += product.price * quantity
         self.total_price = str(abs(total_price))
