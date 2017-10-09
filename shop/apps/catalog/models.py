@@ -309,7 +309,8 @@ class ShopFilter(models.Model):
     name = models.CharField(verbose_name='Наименование фильтра', max_length=255)
     value = models.CharField(verbose_name='Значение поля фильтра',
                              max_length=50, unique=True)
-    type = models.CharField(verbose_name='Значение поля фильтра', choices=TYPE_CHOICES, unique=True)
+    type = models.CharField(verbose_name='Значение поля фильтра', choices=TYPE_CHOICES,
+                            max_length=50, unique=True)
     position = models.IntegerField(verbose_name='Позиция в списке')
 
     class Meta:
