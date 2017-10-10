@@ -80,7 +80,7 @@ class ShopCategorySite(MP_Node):
     position = models.IntegerField(verbose_name='Позиция', blank=True, null=True)
 
     def get_children(self):
-        return ShopCategorySite.get_children(self).filter(show=True)
+        return super(ShopCategorySite, self).get_children().filter(show=True)
 
     def save(self, **kwargs):
         if not self.id:
@@ -102,8 +102,7 @@ class ShopCategoryXML(MP_Node, BaseStatusMixin):
         maker = models.ForeignKey(Maker, verbose_name='Поставщик')
         category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
                                           blank=True, null=True, related_name='category_xml_s')
-        filters = models.ManyToManyField(Filter, verbose_name='Фильтры', related_name='category',
-                                         blank=True, null=True)
+        filters = models.ManyToManyField(Filter, verbose_name='Фильтры', related_name='category')
                                           
         unique_together = ('maker', 'cat_id')
     """
@@ -160,7 +159,7 @@ class ShopProduct(models.Model):
                             format(hashlib.md5(slugify(self.title).
                                                encode(encoding='utf-8')).hexdigest(), '.jpg'))
 
-    parent = models.ForeignKey("self", verbose_name='Основной продукт',
+    parent = models.ForeignKey("self", verbose_name='Основной продукт', blank=True, null=True,
                                on_delete=models.CASCADE, related_name='children_set')
     title = models.CharField(verbose_name='Заголовок', max_length=255, blank=False)
     prov_product_id = models.CharField(verbose_name='ИД', max_length=50, blank=True)
