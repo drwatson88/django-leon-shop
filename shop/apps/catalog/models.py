@@ -79,6 +79,9 @@ class ShopCategorySite(MP_Node):
     image = models.ImageField(verbose_name='Изображение', blank=True, null=True)
     position = models.IntegerField(verbose_name='Позиция', blank=True, null=True)
 
+    def get_absolute_url(self):
+        pass
+
     def get_children(self):
         return super(ShopCategorySite, self).get_children().filter(show=True)
 
@@ -179,10 +182,10 @@ class ShopProduct(models.Model):
         return self.children_set
 
     def photo_s(self):
-        return ShopProductAttachment.objects.filter(product=self, meaning=1).all()
+        return self.attachment.filter(meaning=1).order_by('position').all()
 
     def main_image(self):
-        return ShopProductAttachment.objects.filter(product=self, meaning=1, position=0).first()
+        return self.attachment.filter(meaning=1).order_by('position').first()
 
     def save(self, **kwargs):
         if not self.id and not self.import_fl:
@@ -257,7 +260,7 @@ class ShopProductParamsKV(models.Model):
 class ShopProductAttachment(models.Model):
     """
     Additions:
-        product = models.ForeignKey(Product, verbose_name='Товар')
+        product = models.ForeignKey(Product, verbose_name='Товар', related_name='attachment')
     """
 
     MEANINGS = (
@@ -271,12 +274,9 @@ class ShopProductAttachment(models.Model):
                                                encode(encoding='utf-8')).hexdigest(), '.jpg'))
 
     meaning = models.IntegerField(verbose_name='Тип файла', choices=MEANINGS)
-    file = models.FileField(verbose_name='URL файла',
-                            upload_to=product_attachment_upload_path,
-                            blank=True)
-    image = models.ImageField(verbose_name='URL картинки',
-                              upload_to=product_attachment_upload_path,
-                              blank=True)
+    href = models.ImageField(verbose_name='URL картинки',
+                             upload_to=product_attachment_upload_path,
+                             blank=True)
     type = models.CharField(verbose_name='Тип', max_length=20)
     desc = models.CharField(verbose_name='Описание', max_length=255)
     position = models.IntegerField(verbose_name='Порядок', null=True)

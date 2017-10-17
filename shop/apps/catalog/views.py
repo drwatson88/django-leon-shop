@@ -104,6 +104,7 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
     def __init__(self, *args, **kwargs):
         self.params_storage = {}
         self.output_context = {
+            'current_category': None,
             'page': None,
         }
         super(ShopProductListView, self).__init__(*args, **kwargs)
@@ -115,7 +116,7 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
 
         self.category_xml_s = list(self.current_category.category_xml_s.all().
                                    values_list('id', flat=True))
-        for cat in self.current_category.get_childrens():
+        for cat in self.current_category.get_children():
             self.category_xml_s.extend(cat.category_xml_s.all().
                                        values_list('id', flat=True))
 
@@ -193,6 +194,7 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self._product_s_query()
         self._set_order_s()
         self._product_s_filter_s()
+        self._product_s_pagination()
         self._aggregate()
         return self._render()
 
@@ -215,6 +217,10 @@ class ShopProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
     """
 
     PRODUCT_MODEL = None
+
+    kwargs_params_slots = {
+        'product_slug_title': [None, ''],
+    }
 
     request_params_slots = {
         'ajax': [None, 0],
@@ -268,14 +274,13 @@ class ShopProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
 
     def get(self, *args, **kwargs):
         self._set_product()
-        self._category_s_query()
-        self._set_product_params_pack()
-        self._set_product_params_stock()
-        self._set_product_params_other()
-        self._set_product_image()
-        self._set_product_attach_image_s()
-        self._set_product_attach_file_s()
-        self._get_amount()
+        # self._set_product_params_pack()
+        # self._set_product_params_stock()
+        # self._set_product_params_other()
+        # self._set_product_image()
+        # self._set_product_attach_image_s()
+        # self._set_product_attach_file_s()
+        # self._get_amount()
         self._aggregate()
         return self._render()
 
@@ -299,11 +304,12 @@ class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
     """
 
     PRODUCT_MODEL = None
+    BASKET_MODEL = None
+    BASKET_ITEM_MODEL = None
 
     request_params_slots = {
         'ajax': [None, 0],
-        'item_s': [None, 0],
-        'cart': [None, None],
+        'item_s': [None, 0]
     }
 
     def __init__(self, *args, **kwargs):
@@ -315,17 +321,19 @@ class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.item_s = None
         self.total_price = None
 
-    def calc_update(self):
+    def _calc_update(self):
+        self.BASKET_MODEL.get_current(self.request)
         self.item_s = json.loads(self.params_storage['item_s'])
         total_price = 0
         for item in self.item_s:
             product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])
             quantity = int(item['stock'])
             total_price += product.price * quantity
+            self.BASKET_ITEM_MODEL.add_item(product, quantity)
         self.total_price = str(abs(total_price))
 
     def get(self, *args, **kwargs):
-        self.calc_update()
+        self._calc_update()
         self._aggregate()
         return HttpResponse(json.dumps(self.output_context))
 

@@ -38,29 +38,11 @@ class CatalogParamsValidatorMixin(BaseParamsValidatorMixin):
             return default
 
     @staticmethod
-    def _page_no_validator(value, default):
+    def _page_validator(value, default):
         if value:
             return value
         else:
             return default
-
-    @staticmethod
-    def _page_start_validator(value, default):
-        if value:
-            return value
-        else:
-            return default
-
-    @staticmethod
-    def _page_stop_validator(value, default):
-        if value:
-            return value
-        else:
-            return default
-
-    @staticmethod
-    def _page_size_validator(value, default):
-        return default
 
     @staticmethod
     def _brand_id_s_validator(value, default):
@@ -111,6 +93,10 @@ class CatalogParamsValidatorMixin(BaseParamsValidatorMixin):
 
     @staticmethod
     def _catalog_slug_title_validator(value, default):
+        return value
+
+    @staticmethod
+    def _product_slug_title_validator(value, default):
         return value
 
 

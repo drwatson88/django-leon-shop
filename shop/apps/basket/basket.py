@@ -58,7 +58,7 @@ class Basket(object):
                or product.super_big_image
 
     def add(self, product, quantity=1):
-        item_s = self.ITEM_MODEL.objects.filter(cart=self.id,
+        item_s = self.ITEM_MODEL.objects.filter(basket=self.id,
                                                 product=product).all()
 
         if item_s:

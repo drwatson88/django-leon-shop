@@ -7,7 +7,6 @@ from django.contrib.contenttypes.models import ContentType
 import json
 
 from .cart import Cart
-from catalog.models import PrintType
 from .base import BasketBaseView, BasketParamsValidatorMixin
 
 
