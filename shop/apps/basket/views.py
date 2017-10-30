@@ -1,12 +1,8 @@
 # coding: utf-8
 
-
-from django.template import RequestContext
-from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
-from django.contrib.contenttypes.models import ContentType
 import json
+from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
 
-from .cart import Cart
 from .base import BasketBaseView, BasketParamsValidatorMixin
 
 
@@ -33,43 +29,33 @@ class ShopBasketInsideView(BasketBaseView, BasketParamsValidatorMixin):
     """
 
     BASKET_MODEL = None
+    BASKET_CONTAINER = None
+    TEMPLATE_NAME = None
 
     request_params_slots = {
-        'item_s': [None, []],
     }
 
     session_params_slots = {
-        'cart': [None, None],
-    }
-
-    session_save_slots = {
-        'cart': 'cart_id'
     }
 
     def __init__(self, *args, **kwargs):
         self.params_storage = {}
         self.output_context = {
-            'cart': None,
+            'basket': None,
             'total_price': None
         }
-        super(ShopBasketListView, self).__init__(*args, **kwargs)
-
-    def _set_item_s(self):
-        self.item_s = self.params_storage['item_s']
+        super(ShopBasketInsideView, self).__init__(*args, **kwargs)
 
     def _set_basket(self):
-        self.basket = self.BASKET_MODEL(self.params_storage['cart'])
+        self.basket = self.BASKET_CONTAINER(self.request.session, self.request.user)
 
-    def _cart_update_all(self):
-
-        self.cart.calculate()
-        self.total_price = str(abs(self.cart.price))
+    def _basket_update_all(self):
+        self.basket.calculate()
+        self.total_price = str(abs(self.basket.price))
 
     def get(self, *args, **kwargs):
-        self._set_item_s()
-        self._set_cart()
-        self._cart_update_all()
-        self._save_cookies()
+        self._set_basket()
+        # self._basket_update_all()
         self._aggregate()
 
         return self._render()

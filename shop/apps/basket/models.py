@@ -17,7 +17,7 @@ class ShopBasket(models.Model):
 
     @classmethod
     def get_current(cls, request):
-        cls.objects.filter(cls.request2filter(request))
+        cls.objects.filter(**cls.request2filter(request)).filter(checked_out=False)
 
     @classmethod
     def request2filter(cls, request):

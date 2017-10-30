@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import json
-from leon.base import BaseView, ParamsValidatorMixin
+from leon.apps.base import BaseView, BaseParamsValidatorMixin
 
 
-class BasketParamsValidatorMixin(ParamsValidatorMixin):
+class BasketParamsValidatorMixin(BaseParamsValidatorMixin):
 
     """ Mixin with validators for validate
         request parameters.
@@ -25,7 +25,7 @@ class BasketParamsValidatorMixin(ParamsValidatorMixin):
             return default
 
     @staticmethod
-    def _cart_validator(value, default):
+    def _basket_validator(value, default):
         try:
             return value
         except BaseException as exc:

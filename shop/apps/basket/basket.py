@@ -18,41 +18,46 @@ class DiscountMixin(object):
     pass
 
 
-class Basket(object):
+class ShopBasketContainer(object):
 
-    """ Class for operate cart in session.
+    """ Class for operate basket in session.
         Using request.session dict, where
-        find CART_ID and if cart object
+        find BASKET_ID and if basket object
         not expired and find, return it,
         else, create new object cart.
     """
 
     BASKET_MODEL = None
-    ITEM_MODEL = None
 
-    def __init__(self, basket_id):
-        if basket_id:
-            try:
-                basket = self.BASKET_MODEL.objects.get(id=basket_id, checked_out=False)
-                self.id = basket.id
-            except self.BASKET_MODEL.DoesNotExist:
-                basket = self.new()
+    def __init__(self, session, user):
+        basket = self.BASKET_MODEL
+        if user.is_authenticated():
+            basket = basket.objects.filter(user=user, checked_out=False)
         else:
-            basket = self.new()
-        self.basket = basket
-        self.price = 0
+            basket = basket.objects.filter(session_id=session.session_key, checked_out=False)
+        basket = basket.first()
+
+        if basket:
+            self.basket = basket
+        else:
+            self.basket = self._create(session, user)
 
     def __iter__(self):
         for item in self.basket.item_set.all():
             yield item
 
-    def new(self):
-        basket = self.BASKET_MODEL(creation_date=datetime.datetime.now())
+    def _create(self, session, user):
+        data = {'creation_date': datetime.datetime.now()}
+        if user.is_authenticated():
+            data.update({'user': user})
+        else:
+            data.update({'session_id': session.session_key})
+        basket = self.BASKET_MODEL(**data)
         basket.save()
-        self.id = basket.id
         return basket
 
-    def get_image(self, product):
+    @staticmethod
+    def get_image(product):
         return product.small_image \
                or product.big_image \
                or product.super_big_image
