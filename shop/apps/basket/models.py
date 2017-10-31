@@ -17,7 +17,12 @@ class ShopBasket(models.Model):
 
     @classmethod
     def get_current(cls, request):
-        cls.objects.filter(**cls.request2filter(request)).filter(checked_out=False)
+        return cls.objects.filter(**cls.request2filter(request)).filter(checked_out=False).first() \
+               or cls.objects.update_or_create(**cls.request2filter(request))
+
+    # @classmethod
+    # def (cls, request):
+    #     return cls.objects.filter(**cls.request2filter(request)).filter(checked_out=False).first()
 
     @classmethod
     def request2filter(cls, request):
@@ -38,7 +43,7 @@ class ShopBasketItem(models.Model):
 
     """
         Additions:
-        basket = models.ForeignKey(Basket, blank=False, null=False)
+        basket = models.ForeignKey(Basket, blank=False, null=False, related_name='item')
         product = models.ForeignKey(Product, verbose_name='Товар', blank=False, null=False)
     """
 

@@ -178,9 +178,9 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.order_s = self.ORDER_REFERENCE_MODEL.objects.order_by('-position').all()
         for order_obj in self.order_s:
             order_obj.selected = False
-            if order_obj.name == order:
+            if order_obj.code == order:
                 order_obj.selected = True
-        order_selected = self.ORDER_REFERENCE_MODEL.objects.get(name=order)
+        order_selected = self.ORDER_REFERENCE_MODEL.objects.get(code=order)
         self.order_name = order_selected.field_name \
             if order_selected.field_order else '-{}'.format(order_selected.field_name)
         self.product_set = self.product_set.order_by(self.order_name)
@@ -285,7 +285,7 @@ class ShopProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
         return self._render()
 
 
-class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopProductAddToBasketView(CatalogBaseView, CatalogParamsValidatorMixin):
 
     """ Product Inside View. Receives get params
         and response neither arguments in get
@@ -293,11 +293,7 @@ class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
 
         GET Params:
 
-        1. AJAX - if ajax is True, we have response
-        html part, that insert in DOM structure in client
-        side. If we have True, we response all html
-        document with base template.
-        2. ITEM_S - cart item's with product_type, stock, price,
+        1. ITEM_S - cart item's with product_type, stock, price,
         print_type
 
         ALL PARAMS put in params_storage after validate
@@ -308,7 +304,6 @@ class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
     BASKET_ITEM_MODEL = None
 
     request_params_slots = {
-        'ajax': [None, 0],
         'item_s': [None, 0]
     }
 
@@ -317,19 +312,63 @@ class ShopProductCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.output_context = {
             'total_price': None
         }
-        super(ShopProductCalcView, self).__init__(*args, **kwargs)
+        super(ShopProductAddToBasketView, self).__init__(*args, **kwargs)
         self.item_s = None
         self.total_price = None
 
     def _calc_update(self):
-        self.BASKET_MODEL.get_current(self.request)
+        basket = self.BASKET_MODEL.get_current(self.request)
         self.item_s = json.loads(self.params_storage['item_s'])
         total_price = 0
         for item in self.item_s:
             product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])
             quantity = int(item['stock'])
             total_price += product.price * quantity
-            self.BASKET_ITEM_MODEL.add_item(product, quantity)
+            self.BASKET_ITEM_MODEL.add_item(basket, product, quantity)
+        self.total_price = str(abs(total_price))
+
+    def get(self, *args, **kwargs):
+        self._calc_update()
+        self._aggregate()
+        return HttpResponse(json.dumps(self.output_context))
+
+
+class ShopProductInsideCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
+
+    """ Product Inside View. Receives get params
+        and response neither arguments in get
+        request params.
+
+        GET Params:
+
+        1. ITEM_S - cart item's with product_type, stock, price,
+        print_type
+
+        ALL PARAMS put in params_storage after validate
+    """
+
+    PRODUCT_MODEL = None
+
+    request_params_slots = {
+        'item_s': [None, 0]
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.params_storage = {}
+        self.output_context = {
+            'total_price': None
+        }
+        super(ShopProductInsideCalcView, self).__init__(*args, **kwargs)
+        self.item_s = None
+        self.total_price = None
+
+    def _calc_update(self):
+        self.item_s = json.loads(self.params_storage['item_s'])
+        total_price = 0
+        for item in self.item_s:
+            product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])
+            quantity = int(item['stock'])
+            total_price += product.price * quantity
         self.total_price = str(abs(total_price))
 
     def get(self, *args, **kwargs):

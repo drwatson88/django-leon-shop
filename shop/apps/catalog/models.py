@@ -13,12 +13,12 @@ from leon.apps.base.models import BaseStatusMixin
 
 class ShopMaker(models.Model):
 
-    name = models.CharField(verbose_name='Поставщик', max_length=255, unique=True)
-    official = models.CharField(verbose_name='Наименование поставщика', max_length=255)
+    title = models.CharField(verbose_name='Наименование поставщика', max_length=255)
+    code = models.CharField(verbose_name='Уникальный идентификатор', max_length=255, unique=True)
 
     def save(self, **kwargs):
         if not self.id:
-            self.name = slugify(self.official)
+            self.name = slugify(self.title)
         super(ShopMaker, self).save(**kwargs)
 
     class Meta:
@@ -27,16 +27,16 @@ class ShopMaker(models.Model):
         verbose_name_plural = 'Поставщики'
 
     def __str__(self):
-        return self.official
+        return self.title
 
 
 class ShopBrand(models.Model):
-    name = models.CharField(verbose_name='Бренд', max_length=255, unique=True)
-    official = models.CharField(verbose_name='Наименование бренда', max_length=255)
+    title = models.CharField(verbose_name='Наименование бренда', max_length=255)
+    code = models.CharField(verbose_name='Уникальный идентификатор', max_length=255, unique=True)
 
     def save(self, **kwargs):
         if not self.id:
-            self.name = slugify(self.official)
+            self.name = slugify(self.title)
         super(ShopBrand, self).save(**kwargs)
 
     class Meta:
@@ -45,7 +45,7 @@ class ShopBrand(models.Model):
         verbose_name_plural = 'Бренд на сайте'
 
     def __str__(self):
-        return self.official
+        return self.title
 
 
 class ShopBrandMaker(models.Model):
@@ -177,6 +177,15 @@ class ShopProduct(models.Model):
     stock = models.IntegerField(verbose_name='Остаток', null=True, blank=True, default=None)
     show = models.BooleanField(verbose_name='Показывать', default=True)
     import_fl = models.BooleanField(verbose_name='Импортирован в базу', default=False)
+
+    def get_price(self):
+        pass
+
+    def get_price_with_discount(self):
+        pass
+
+    def get_discount(self):
+        pass
 
     def get_children_s(self):
         return self.children_set
@@ -320,9 +329,9 @@ class ShopFilter(models.Model):
 
 class ShopOrderReference(models.Model):
 
-    name = models.CharField(verbose_name='Тип порядка сортировки продукта',
+    code = models.CharField(verbose_name='Тип порядка сортировки продукта',
                             max_length=255, unique=True)
-    official = models.CharField(verbose_name='Наименование типа порядка '
+    title = models.CharField(verbose_name='Наименование типа порядка '
                                              'сортировки продукта', max_length=255)
     field_name = models.CharField(verbose_name='Поле сортировки продукта', max_length=30)
     field_order = models.BooleanField(verbose_name='Порядок сортировки')

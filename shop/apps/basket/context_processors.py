@@ -1,25 +1,30 @@
 # coding: utf-8
 
-from .cart import SessionCart
+
+from leon.base import BaseContextProcessor
+from .base import BasketParamsValidatorMixin
 
 
-def session_cart(request):
-    cart = SessionCart(request)
-    cart.summ = 0
-    cart.coutn = 0
-    cart.items_lst = list()
-    for item in cart:
-        cart.summ += item.quantity * item.unit_price
-        cart.coutn += item.quantity
+class BasketMenuContextProcessor(BaseContextProcessor, BasketParamsValidatorMixin):
 
-        if item.content_type.name == u'sub tovar':
-            item.image = item.product.tovar.small_image
-            cart.items_lst.append(item)
-        else:
-            item.image = item.product.small_image
-            cart.items_lst.append(item)
+    """
+    Class for block context processor menu
+    """
 
-    # import pprint as ppp
-    # ppp.pprint(cart.items_lst)
+    kwargs_params_slots = {
+    }
 
-    return {u'cart_header': cart,}
+    CATEGORY_SITE_MODEL = None
+
+    def _create_data(self, request):
+        self.basket = self.BASKET_MODEL.get_current(request)
+
+    def __call__(self, request):
+        self.main_menu = {}
+        self.output_context = {
+            'basket': None
+        }
+        self._init(request)
+        self._create_data(request)
+        self._aggregate()
+        return self.output_context
