@@ -4,6 +4,26 @@
 from django.forms import forms, fields
 
 
-class DeliveryCityForm(forms.Form):
+class ShopDeliveryCityServiceForm(forms.Form):
 
-    city = fields.CharField(verbose_name='Город')
+    pass
+
+
+class ShopBaseContactForm(forms.Form):
+
+    pass
+
+
+class ShopShortContactForm(ShopBaseContactForm):
+
+    pass
+
+
+class ShopCourierContactForm(ShopShortContactForm):
+
+    pass
+
+
+class ShopFullContactForm(ShopCourierContactForm):
+
+    pass
