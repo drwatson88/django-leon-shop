@@ -1,6 +1,7 @@
 # coding: utf-8
 
 
+from datetime import datetime
 from django.db import models
 
 
@@ -12,13 +13,13 @@ class ShopBasket(models.Model):
         user = models.ForeignKey(User)
     """
 
-    creation_date = models.DateTimeField(verbose_name=u'creation date')
+    creation_date = models.DateTimeField(verbose_name=u'creation date', default=datetime.now)
     checked_out = models.BooleanField(default=False, verbose_name=u'checked out')
 
     @classmethod
     def get_current(cls, request):
         return cls.objects.filter(**cls.request2filter(request)).filter(checked_out=False).first() \
-               or cls.objects.update_or_create(**cls.request2filter(request))
+               or cls.objects.update_or_create(**cls.request2filter(request))[0]
 
     # @classmethod
     # def (cls, request):
