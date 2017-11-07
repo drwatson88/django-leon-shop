@@ -99,7 +99,6 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
         
         :return: 
         """
-
         qdata = json.loads(self.params_storage['filter'])
         self.filter_set = self.current_category.filter_s.all() or \
                           self.parent_category.filter_s.all()
@@ -108,16 +107,17 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
         for filter_obj in self.filter_set:
             filter_input = {'filter': filter_obj}
             if filter_obj.type == 'FIELD':
-                filter_input['max'] = int(self.product_set.aggregate(Max('price'))['price__max'] + 2)
-                filter_input['min'] = int(self.product_set.aggregate(Min('price'))['price__min'] - 2)
-                filter_input['from'] = self.params_storage['price_from'] or (filter_input['price_min'] + 1)
-                filter_input['to'] = self.params_storage['price_to'] or (filter_input['price_max'] - 1)
-            if filter_obj.type == 'STOCK':
-                # TODO: продумать скидку
-                filter_input['stock_max'] = int(self.product_set.aggregate(Max('stock'))['stock__max'] + 2)
-                filter_input['stock_min'] = int(self.product_set.aggregate(Min('stock'))['stock__min'] - 2)
-                filter_input['stock_from'] = self.params_storage['stock_from'] or (filter_input['stock_min'] - 1)
-                filter_input['stock_to'] = self.params_storage['stock_to'] or (filter_input['stock_max'] + 1)
+                params = qdata[filter_obj.type][filter_obj.code]
+                q = filter_obj.query_method
+                if q:
+                    getattr(self, q)()
+                else:
+                    filter_input['max'] = int(self.product_set.aggregate(Max(filter_obj.field_name))
+                                              ['{}__max'.format(filter_obj.field_name)] + 2)
+                    filter_input['min'] = int(self.product_set.aggregate(Min(filter_obj.field_name))
+                                              ['{}__min'.format(filter_obj.field_name)] - 2)
+                    filter_input['from'] = params['from'] or (filter_input['min'] + 1)
+                    filter_input['to'] = params['to'] or (filter_input['max'] - 1)
             if filter_obj.type in ['M2M', 'FK']:
                 m = filter_obj.query_method
                 f = filter_obj.query_filter

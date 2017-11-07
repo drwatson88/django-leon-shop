@@ -324,6 +324,7 @@ class ShopFilter(models.Model):
     code = models.CharField(verbose_name='Наименование фильтра', max_length=255)
     type = models.CharField(verbose_name='Значение поля фильтра', choices=TYPE_CHOICES, max_length=50)
     kv_key = models.CharField(verbose_name='Ключ фильтра', max_length=50, null=True, blank=True)
+    field_name = models.CharField(verbose_name='Название поля', max_length=50, null=True, blank=True)
     query_method = models.CharField(verbose_name='Метод фильтра', max_length=50, null=True, blank=True)
     template = models.CharField(verbose_name='Шаблон реализации', max_length=50)
     position = models.IntegerField(verbose_name='Позиция в списке')
