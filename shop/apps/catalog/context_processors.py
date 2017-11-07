@@ -100,17 +100,18 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
         :return: 
         """
 
+        qdata = json.loads(self.params_storage['filter'])
         self.filter_set = self.current_category.filter_s.all() or \
-                        self.parent_category.filter_s.all()
+                          self.parent_category.filter_s.all()
         self.filter_set = self.filter_set
 
         for filter_obj in self.filter_set:
             filter_input = {'filter': filter_obj}
-            if filter_obj.type == 'PRICE':
-                filter_input['price_max'] = int(self.product_set.aggregate(Max('price'))['price__max'] + 2)
-                filter_input['price_min'] = int(self.product_set.aggregate(Min('price'))['price__min'] - 2)
-                filter_input['price_from'] = self.params_storage['price_from'] or (filter_input['price_min'] + 1)
-                filter_input['price_to'] = self.params_storage['price_to'] or (filter_input['price_max'] - 1)
+            if filter_obj.type == 'FIELD':
+                filter_input['max'] = int(self.product_set.aggregate(Max('price'))['price__max'] + 2)
+                filter_input['min'] = int(self.product_set.aggregate(Min('price'))['price__min'] - 2)
+                filter_input['from'] = self.params_storage['price_from'] or (filter_input['price_min'] + 1)
+                filter_input['to'] = self.params_storage['price_to'] or (filter_input['price_max'] - 1)
             if filter_obj.type == 'STOCK':
                 # TODO: продумать скидку
                 filter_input['stock_max'] = int(self.product_set.aggregate(Max('stock'))['stock__max'] + 2)
