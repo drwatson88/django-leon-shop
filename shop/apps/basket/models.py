@@ -56,6 +56,9 @@ class ShopBasketItem(models.Model):
     def add_item(cls, basket, product, quantity):
         cls.objects.update_or_create(basket=basket, product=product, quantity=quantity)
 
+    def total(self):
+        return self.product.price * self.quantity
+
     class Meta:
         abstract = True
         verbose_name = u'basket item'

@@ -28,7 +28,6 @@ class ShopBasketInsideView(BasketBaseView, BasketParamsValidatorMixin):
         ALL PARAMS put in params_storage after validate
     """
 
-    BASKET_MODEL = None
     BASKET_CONTAINER = None
     TEMPLATE_NAME = None
 
@@ -82,18 +81,13 @@ class ShopBasketMenuView(BasketBaseView, BasketParamsValidatorMixin):
         ALL PARAMS put in params_storage after validate
     """
 
-    BASKET_MODEL = None
+    BASKET_CONTAINER = None
+    TEMPLATE_NAME = None
 
     request_params_slots = {
-        'item_s': [None, []],
     }
 
     session_params_slots = {
-        'basket': [None, None],
-    }
-
-    session_save_slots = {
-        'basket': 'basket_id'
     }
 
     def __init__(self, *args, **kwargs):
@@ -104,19 +98,16 @@ class ShopBasketMenuView(BasketBaseView, BasketParamsValidatorMixin):
         }
         super(ShopBasketMenuView, self).__init__(*args, **kwargs)
 
-    def _set_cart(self):
-        self.basket = self.BASKET_MODEL(self.params_storage['basket'])
-        self.basket_id = self.basket.id
+    def _set_basket(self):
+        self.basket = self.BASKET_CONTAINER(self.request.session, self.request.user)
 
-    def _cart_update_all(self):
-
+    def _basket_update_all(self):
         self.basket.calculate()
         self.total_price = str(abs(self.basket.price))
 
     def get(self, *args, **kwargs):
         self._set_basket()
-        self._basket_update_all()
-        self._save_cookies()
+        # self._basket_update_all()
         self._aggregate()
 
         return self._render()

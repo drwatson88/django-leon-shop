@@ -260,6 +260,7 @@ class ShopProductParamsKV(models.Model):
     abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
     name = models.CharField(verbose_name='Имя поля', max_length=255)
     value = models.CharField(verbose_name='Значение поля', max_length=4000)
+    value_hash = models.IntegerField(verbose_name='Хэш значение поля')
     position = models.IntegerField(verbose_name='Порядок', null=True)
 
     class Meta:
@@ -304,27 +305,36 @@ class ShopProductAttachment(models.Model):
 
 
 class ShopFilter(models.Model):
+    """
+    Additions:
+        category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
+                                          blank=True, null=True, related_name='category_xml_s')
+
+        unique_together = ('category_site', 'type', 'code')
+    """
 
     TYPE_CHOICES = (
-        ('PRICE', 'Цена'),
-        ('STOCK', 'Остаток на складе'),
+        ('FIELD', 'Поле'),
         ('M2M', 'Многие-ко-многим (доп.класс)'),
         ('FK', 'Один-ко-многим (доп.класс)'),
         ('KV', 'Хранилище доп. параметров'),
     )
 
     title = models.CharField(verbose_name='Название фильтра', max_length=255)
-    name = models.CharField(verbose_name='Наименование фильтра', max_length=255)
-    value = models.CharField(verbose_name='Значение поля фильтра',
-                             max_length=50, unique=True)
-    type = models.CharField(verbose_name='Значение поля фильтра', choices=TYPE_CHOICES,
-                            max_length=50, unique=True)
+    code = models.CharField(verbose_name='Наименование фильтра', max_length=255)
+    type = models.CharField(verbose_name='Значение поля фильтра', choices=TYPE_CHOICES, max_length=50)
+    key = models.CharField(verbose_name='Ключ фильтра', max_length=50, null=True, blank=True)
+    query_method = models.CharField(verbose_name='Метод фильтра', max_length=50, null=True, blank=True)
+    query_filter = models.CharField(verbose_name='Входнй параметр фильтра', max_length=50, null=True, blank=True)
     position = models.IntegerField(verbose_name='Позиция в списке')
+
+    def __str__(self):
+        return self.title
 
     class Meta:
         abstract = True
-        verbose_name = 'Тип порядка сортировки продукта'
-        verbose_name_plural = 'Типы порядков сортировки продукта'
+        verbose_name = 'Фильтр'
+        verbose_name_plural = 'Фильтры'
 
 
 class ShopOrderReference(models.Model):

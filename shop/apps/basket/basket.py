@@ -28,6 +28,7 @@ class ShopBasketContainer(object):
     """
 
     BASKET_MODEL = None
+    BASKET_ITEM_MODEL = None
 
     def __init__(self, session, user):
         basket = self.BASKET_MODEL
@@ -62,20 +63,17 @@ class ShopBasketContainer(object):
                or product.big_image \
                or product.super_big_image
 
-    def add(self, product, quantity=1):
-        item_s = self.ITEM_MODEL.objects.filter(basket=self.id,
-                                                product=product).all()
+    def add_item(self, product, quantity=1):
+        item = self.BASKET_ITEM_MODEL.objects.filter(basket=self.basket,
+                                                     product=product).first()
 
-        if item_s:
-            item = item_s[0]
+        if item:
             item.quantity += int(quantity)
         else:
-
-            item = models.Item(cart=self.basket,
-                               product=product,
-                               quantity=quantity,
-                               image=self.get_image(product))
-
+            item = self.BASKET_ITEM_MODEL(cart=self.basket,
+                                          product=product,
+                                          quantity=quantity,
+                                          image=self.get_image(product))
         item.save()
 
     def remove(self, product, ):
@@ -129,8 +127,8 @@ class ShopBasketContainer(object):
 
     def total(self):
         total = 0
-        for item in self.basket.item_set.all():
-            total += item.total_price
+        for item in self.basket.item.all():
+            total += item.total()
         return total
 
     def item_count(self):
@@ -138,6 +136,9 @@ class ShopBasketContainer(object):
         for item in self.basket.item_set.all():
             total += item.quantity
         return total
+
+    def item_s(self):
+        return self.basket.item.all()
 
     def has_items(self):
         return self.item_count() > 0

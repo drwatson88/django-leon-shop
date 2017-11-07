@@ -4,7 +4,7 @@ import json
 from digg_paginator import DiggPaginator
 from django.shortcuts import get_object_or_404, HttpResponse
 
-from .base import CatalogBaseView, CatalogParamsValidatorMixin
+from .base import ShopCatalogBaseView, ShopCatalogParamsValidatorMixin
 
 
 PAGE_SIZE = 20
@@ -15,7 +15,7 @@ MIN_STOCK = 0
 MAX_STOCK = 9999999
 
 
-class ShopCategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopCategoryListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
     """ Category List View. Receives get params
         and response neither arguments in get
@@ -51,7 +51,7 @@ class ShopCategoryListView(CatalogBaseView, CatalogParamsValidatorMixin):
         return self._render()
 
 
-class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
     """ Product List View. Receives get params
         and response neither arguments in get
@@ -77,6 +77,7 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
     PRODUCT_MODEL = None
     BRAND_MODEL = None
     BRAND_MAKER_MODEL = None
+    PRODUCT_PARAMS_KV_MODEL = None
     ORDER_REFERENCE_MODEL = None
     FILTER_MODEL = None
 
@@ -98,7 +99,7 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         'stock_from': [None, MIN_STOCK],
         'stock_to': [None, MAX_STOCK],
 
-        'brand_id_s': [None, []],
+        'brand_id_s': [None, ""],
     }
 
     def __init__(self, *args, **kwargs):
@@ -123,55 +124,72 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
     def _product_s_query(self):
         self.product_set = self.PRODUCT_MODEL.objects.filter(category_xml__in=self.category_xml_s)
 
-    def _product_s_filter_s(self):
+    def _product_filter_s(self):
         """
 
         :return: 
         """
 
-        self.filter_set = self.current_category.filters.all() or \
-                          (self.parent_category and self.parent_category.filters.all())
+        self.filter_set = self.current_category.filter_s.all() or \
+                          (self.parent_category and self.parent_category.filter_s.all())
         self.filter_set = self.filter_set.order_by('position')
 
         for filter_obj in self.filter_set:
-            if filter_obj.type == 'PRICE':
-                if self.params_storage['price_from']:
-                    self.product_set = self.product_set.filter(price__gte=self.params_storage['price_from'])
-                if self.params_storage['price_to']:
-                    self.product_set = self.product_set.filter(price__gte=self.params_storage['price_to'])
-            if filter_obj.type == 'STOCK':
-                if self.params_storage['stock_from']:
-                    self.product_set = self.product_set.filter(stock__gte=self.params_storage['stock_from'])
-                if self.params_storage['stock_to']:
-                    self.product_set = self.product_set.filter(stock__gte=self.params_storage['stock_to'])
+            if filter_obj.type == 'FIELD':
+                m = filter_obj.query_method
+                f = filter_obj.query_filter
+                if self.params_storage['{}_from'.format(f)]:
+                    self.product_set = self.product_set.filter(
+                        **{'{}_gte'.format(f): self.params_storage['{}_from'.format(f)]}
+                    )
+                if self.params_storage['{}_to'.format(f)]:
+                    self.product_set = self.product_set.filter(
+                        **{'{}_lte'.format(f): self.params_storage['{}_to'.format(f)]}
+                    )
             if filter_obj.type in ['M2M', 'FK']:
-                json_value = json.loads(filter_obj.value)
-                filter_value = self.params_storage.get(filter_obj.name) or \
-                               (json_value['filter'] and self.params_storage[json_value['filter']])
-                if filter_value:
-                    self.product_set = self.product_set.\
-                        filter(**{'{abbr}__value'.format(abbr=filter_obj.name): filter_value})
+                m = filter_obj.query_method
+                f = filter_obj.query_filter
+                query = getattr(self, m)(query_filter=f)
+                if query:
+                    self.product_set = self.product_set.filter(**query)
             if filter_obj.type == 'KV':
-                json_value = json.loads(filter_obj.value)
-                filter_value = self.params_storage.get(filter_obj.name) or \
-                               (json_value['filter'] and self.params_storage[json_value['filter']])
-                if filter_value:
-                    product_id_s = self.product_set.values_list('id', flat=True)
-                    product_kv_id_s = self.CATALOG_PRODUCT_PARAMS_KV_MODEL.objects. \
-                        filter(**{'{rel}__in'.format(rel=json_value['related_query']): product_id_s}). \
-                        filter(abbr=filter_obj.name).\
-                        filter(value=filter_value).\
-                        values('{rel}__pk'.format(rel=json_value['related_query']), flat=True)
-                    self.product_set = self.product_set.filter(pk__in=product_kv_id_s)
+                f = filter_obj.query_filter
+                query = self._params_kv_query(query_filter=f, key=filter_obj.key)
+                if query:
+                    self.product_set = self.product_set.filter(**query)
 
-    def _brand_s_query(self):
-        brand_id_s = self.params_storage['brand_id_s']
-        self.brand_obj_s = self.BRAND_MODEL.objects.all()
-        for brand_obj in self.brand_obj_s:
-            if str(brand_obj.id) in brand_id_s:
-                brand_obj.checked = True
-        self.brand_maker_id_s = self.BRAND_MAKER_MODEL.objects.filter(brand__in=brand_id_s). \
-            values_list('id', flat=True)
+    def _get_format_param(self, param):
+        """
+
+        :param param:
+        :return:
+        """
+        # param = str(self.params_storage[param]) or ''
+        # return json.loads(param) if param and len(param.split(',')) > 1 else [param] if param else []
+        param = str(self.params_storage[param]).split(',')
+        param = param if param.pop() else []
+        return [int(p) for p in param] if isinstance(param, list) else [int(param)] if param else []
+
+    def _brand_s_query(self, *args, **kwargs):
+        query_filter = kwargs['query_filter']
+        brand_id_s = self._get_format_param(query_filter)
+        if brand_id_s:
+            brand_maker_id_s = self.BRAND_MAKER_MODEL.objects.filter(brand__in=brand_id_s). \
+                values_list('id', flat=True)
+            return {'brand__brand__in': brand_maker_id_s}
+        return {}
+
+    def _params_kv_query(self, query_filter, key):
+        qf = self._get_format_param(query_filter)
+        if qf:
+            product_id_s = self.product_set.values_list('id', flat=True)
+            product_kv_id_s = self.PRODUCT_PARAMS_KV_MODEL.objects. \
+                filter(product__in=product_id_s). \
+                filter(key=key). \
+                filter(value_hash__in=qf). \
+                values('pk', flat=True)
+            return {'params_kv__in': product_kv_id_s}
+        return {}
 
     def _set_order_s(self):
         order = self.params_storage['order']
@@ -193,13 +211,13 @@ class ShopProductListView(CatalogBaseView, CatalogParamsValidatorMixin):
         self._category_s_query()
         self._product_s_query()
         self._set_order_s()
-        self._product_s_filter_s()
+        self._product_filter_s()
         self._product_s_pagination()
         self._aggregate()
         return self._render()
 
 
-class ShopProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopProductInsideView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
     """ Product Inside View. Receives get params
         and response neither arguments in get
@@ -285,7 +303,7 @@ class ShopProductInsideView(CatalogBaseView, CatalogParamsValidatorMixin):
         return self._render()
 
 
-class ShopProductAddToBasketView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopProductAddToBasketView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
     """ Product Inside View. Receives get params
         and response neither arguments in get
@@ -300,8 +318,7 @@ class ShopProductAddToBasketView(CatalogBaseView, CatalogParamsValidatorMixin):
     """
 
     PRODUCT_MODEL = None
-    BASKET_MODEL = None
-    BASKET_ITEM_MODEL = None
+    BASKET_CONTAINER = None
 
     request_params_slots = {
         'item_s': [None, 0]
@@ -317,14 +334,14 @@ class ShopProductAddToBasketView(CatalogBaseView, CatalogParamsValidatorMixin):
         self.total_price = None
 
     def _calc_update(self):
-        basket = self.BASKET_MODEL.get_current(self.request)
+        basket = self.BASKET_CONTAINER(self.request.session, self.request.user)
         self.item_s = json.loads(self.params_storage['item_s'])
         total_price = 0
         for item in self.item_s:
             product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])
             quantity = int(item['stock'])
             total_price += product.price * quantity
-            self.BASKET_ITEM_MODEL.add_item(basket, product, quantity)
+            basket.add_item(product, quantity)
         self.total_price = str(abs(total_price))
 
     def get(self, *args, **kwargs):
@@ -333,7 +350,7 @@ class ShopProductAddToBasketView(CatalogBaseView, CatalogParamsValidatorMixin):
         return HttpResponse(json.dumps(self.output_context))
 
 
-class ShopProductInsideCalcView(CatalogBaseView, CatalogParamsValidatorMixin):
+class ShopProductInsideCalcView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
     """ Product Inside View. Receives get params
         and response neither arguments in get

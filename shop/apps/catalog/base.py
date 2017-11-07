@@ -4,7 +4,7 @@ import json
 from leon.apps.base import BaseView, BaseParamsValidatorMixin
 
 
-class CatalogParamsValidatorMixin(BaseParamsValidatorMixin):
+class ShopCatalogParamsValidatorMixin(BaseParamsValidatorMixin):
 
     """ Mixin with validators for validate
         request parameters.
@@ -100,7 +100,7 @@ class CatalogParamsValidatorMixin(BaseParamsValidatorMixin):
         return value
 
 
-class CatalogBaseView(BaseView):
+class ShopCatalogBaseView(BaseView):
 
     """ Class Base for all Catalog Class Views
         When request is received, then
