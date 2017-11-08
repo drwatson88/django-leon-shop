@@ -45,38 +45,10 @@ class ShopCatalogParamsValidatorMixin(BaseParamsValidatorMixin):
             return default
 
     @staticmethod
-    def _brand_id_s_validator(value, default):
+    def _filter_validator(value, default):
         try:
             return json.loads(value)
         except BaseException as exc:
-            return default
-
-    @staticmethod
-    def _stock_from_validator(value, default):
-        if value and int(value):
-            return value
-        else:
-            return default
-
-    @staticmethod
-    def _stock_to_validator(value, default):
-        if value and int(value):
-            return value
-        else:
-            return default
-
-    @staticmethod
-    def _price_from_validator(value, default):
-        if value and int(value):
-            return value
-        else:
-            return default
-
-    @staticmethod
-    def _price_to_validator(value, default):
-        if value and int(value):
-            return value
-        else:
             return default
 
     @staticmethod

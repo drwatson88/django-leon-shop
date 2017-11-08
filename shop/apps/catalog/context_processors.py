@@ -58,16 +58,8 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
 
     request_params_slots = {
         'order': [None, 'default'],
-
         'page': [None, 1],
-
-        'price_from': [None, None],
-        'price_to': [None, None],
-
-        'stock_from': [None, None],
-        'stock_to': [None, None],
-
-        'brand_id_s': [None, []],
+        'filter': [None, "{}"],
     }
 
     kwargs_params_slots = {
@@ -106,45 +98,47 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
 
         for filter_obj in self.filter_set:
             filter_input = {'filter': filter_obj}
+            params = qdata.get(filter_obj.type).get(filter_obj.code) if qdata.get(filter_obj.type) else {}
             if filter_obj.type == 'FIELD':
-                params = qdata[filter_obj.type][filter_obj.code]
+                q = filter_obj.query_method
+                f = filter_obj.field_name
+                if q:
+                    filter_input = getattr(self, q)()
+                else:
+                    filter_input['max'] = int((self.product_set.aggregate(Max(f))
+                                              ['{}__max'.format(f)] or 5) + 2)
+                    filter_input['min'] = int((self.product_set.aggregate(Min(f))
+                                              ['{}__min'.format(f)] or 5) - 2)
+                    filter_input['from'] = params.get('from') or (filter_input['min'] + 1)
+                    filter_input['to'] = params.get('to') or (filter_input['max'] - 1)
+            if filter_obj.type in ['M2M', 'FK']:
+                selected = str(params['selected']).split(',') if params.get('selected') else []
                 q = filter_obj.query_method
                 if q:
-                    getattr(self, q)()
+                    filter_input = getattr(self, q)(selected=selected)
                 else:
-                    filter_input['max'] = int(self.product_set.aggregate(Max(filter_obj.field_name))
-                                              ['{}__max'.format(filter_obj.field_name)] + 2)
-                    filter_input['min'] = int(self.product_set.aggregate(Min(filter_obj.field_name))
-                                              ['{}__min'.format(filter_obj.field_name)] - 2)
-                    filter_input['from'] = params['from'] or (filter_input['min'] + 1)
-                    filter_input['to'] = params['to'] or (filter_input['max'] - 1)
-            if filter_obj.type in ['M2M', 'FK']:
-                m = filter_obj.query_method
-                f = filter_obj.query_filter
-                filter_input['item_s'] = getattr(self, m)(query_filter=f)
-                filter_input['selected'] = self._get_format_param(f)
+                    obj_s = set(self.product_set.values_list(
+                        '{0}__{0}__pk'.format(filter_obj.code),
+                        '{0}__{0}__title'.format(filter_obj.code)))
+                    obj_s.remove((None, None)) if (None, None) in obj_s else None
+                    filter_input['item_s'] = [{'pk': k, 'title': v} for k, v in obj_s]
+                    filter_input['selected'] = selected if selected \
+                        else [item['pk'] for item in filter_input['item_s']]
             if filter_obj.type == 'KV':
-                key = filter_obj.key
-                f = filter_obj.query_filter
-                filter_input['item_s'] = self._param_kv_s_query(key=key)
-                filter_input['selected'] = self._get_format_param(f)
+                kv_key = filter_obj.kv_key
+                selected = str(params['selected']).split(',') if params.get('selected') else []
+
+                q = filter_obj.query_method
+                if q:
+                    filter_input = getattr(self, q)(selected=selected, kv_key=kv_key)
+                else:
+                    obj_s = set(self.product_set.filter(params_kv__key=kv_key).
+                                values_list('params_kv__value_hash', 'params_kv__value'))
+                    obj_s.remove((None, None)) if (None, None) in obj_s else None
+                    filter_input['item_s'] = [{'pk': k, 'title': v} for k, v in obj_s]
+                    filter_input['selected'] = selected if selected \
+                        else [item['pk'] for item in filter_input['item_s']]
             self.filter_s.append(filter_input)
-
-    def _get_format_param(self, param):
-        param = str(self.params_storage[param]) or ''
-        return json.loads(param) if param and len(param.split(',')) > 1 else [param] if param else []
-
-    def _brand_s_query(self, *args, **kwargs):
-        brand_s = set(self.product_set.values_list('brand__brand__pk', 'brand__brand__title'))
-        brand_s.remove((None, None)) if (None, None) in brand_s else None
-        return [{'pk': k, 'title': v} for k, v in brand_s]
-
-    def _param_kv_s_query(self, *args, **kwargs):
-        key = kwargs['key']
-        brand_s = set(self.product_set.filter(params_kv__key=key).
-                      values_list('params_kv__value_hash', 'params_kv__value'))
-        brand_s.remove((None, None))
-        return brand_s
 
     def __call__(self, request):
         self.filter_s = []

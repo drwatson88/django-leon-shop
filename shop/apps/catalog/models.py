@@ -325,8 +325,9 @@ class ShopFilter(models.Model):
     type = models.CharField(verbose_name='Значение поля фильтра', choices=TYPE_CHOICES, max_length=50)
     kv_key = models.CharField(verbose_name='Ключ фильтра', max_length=50, null=True, blank=True)
     field_name = models.CharField(verbose_name='Название поля', max_length=50, null=True, blank=True)
+    unit = models.CharField(verbose_name='Единица измерения', max_length=10, null=True, blank=True)
     query_method = models.CharField(verbose_name='Метод фильтра', max_length=50, null=True, blank=True)
-    template = models.CharField(verbose_name='Шаблон реализации', max_length=50)
+    template = models.CharField(verbose_name='Шаблон реализации', max_length=50, null=False, blank=False)
     position = models.IntegerField(verbose_name='Позиция в списке')
 
     def __str__(self):
@@ -342,7 +343,7 @@ class ShopOrderReference(models.Model):
 
     code = models.CharField(verbose_name='Тип порядка сортировки продукта',
                             max_length=255, unique=True)
-    title = models.CharField(verbose_name='Наименование типа порядка ''
+    title = models.CharField(verbose_name='Наименование типа порядка'
                                           'сортировки продукта', max_length=255)
     field_name = models.CharField(verbose_name='Поле сортировки продукта', max_length=30)
     field_order = models.BooleanField(verbose_name='Порядок сортировки')

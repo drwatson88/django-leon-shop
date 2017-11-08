@@ -68,7 +68,6 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         4. ORDER - sort order
         5. PAGE_NO - page number
         6. PAGE_SIZE - size of page (count = rows*columns)
-        7. BRAND_ID_S - list of id's in database of site brands
 
         ALL PARAMS put in params_storage after validate
     """
@@ -90,16 +89,8 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
     request_params_slots = {
         'order': [None, 'default'],
-
         'page': [None, 1],
-
-        'price_from': [None, MIN_PRICE],
-        'price_to': [None, MAX_PRICE],
-
-        'stock_from': [None, MIN_STOCK],
-        'stock_to': [None, MAX_STOCK],
-
-        'brand_id_s': [None, ""],
+        'filter': [None, "{}"],
     }
 
     def __init__(self, *args, **kwargs):
@@ -129,67 +120,46 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
         :return: 
         """
+        qdata = json.loads(self.params_storage['filter'])
+        if not qdata:
+            return
 
         self.filter_set = self.current_category.filter_s.all() or \
                           (self.parent_category and self.parent_category.filter_s.all())
         self.filter_set = self.filter_set.order_by('position')
 
         for filter_obj in self.filter_set:
+            params = qdata.get(filter_obj.type).get(filter_obj.code) if qdata.get(filter_obj.type) else {}
             if filter_obj.type == 'FIELD':
-                m = filter_obj.query_method
-                f = filter_obj.query_filter
-                if self.params_storage['{}_from'.format(f)]:
-                    self.product_set = self.product_set.filter(
-                        **{'{}_gte'.format(f): self.params_storage['{}_from'.format(f)]}
-                    )
-                if self.params_storage['{}_to'.format(f)]:
-                    self.product_set = self.product_set.filter(
-                        **{'{}_lte'.format(f): self.params_storage['{}_to'.format(f)]}
-                    )
+                q = filter_obj.query_method
+                f = filter_obj.field_name
+                if q:
+                    self.product_set = getattr(self, q)()
+                else:
+                    if params.get('{}_from'.format(f)):
+                        self.product_set = self.product_set.filter(
+                            **{'{}_gte'.format(f): params.get('{}_from'.format(f))}
+                        )
+                    if params.get('{}_to'.format(f)):
+                        self.product_set = self.product_set.filter(
+                            **{'{}_lte'.format(f): params.get('{}_to'.format(f))}
+                        )
             if filter_obj.type in ['M2M', 'FK']:
-                m = filter_obj.query_method
-                f = filter_obj.query_filter
-                query = getattr(self, m)(query_filter=f)
-                if query:
-                    self.product_set = self.product_set.filter(**query)
+                selected = str(params['selected']).split(',') if params.get('selected') else []
+                q = filter_obj.query_method
+                if q:
+                    self.product_set = getattr(self, q)(selected=selected)
+                elif selected:
+                    self.product_set = self.product_set.filter(**{'{}__in'.format(filter_obj.code): selected})
+
             if filter_obj.type == 'KV':
-                f = filter_obj.query_filter
-                query = self._params_kv_query(query_filter=f, key=filter_obj.key)
-                if query:
-                    self.product_set = self.product_set.filter(**query)
-
-    def _get_format_param(self, param):
-        """
-
-        :param param:
-        :return:
-        """
-        # param = str(self.params_storage[param]) or ''
-        # return json.loads(param) if param and len(param.split(',')) > 1 else [param] if param else []
-        param = str(self.params_storage[param]).split(',')
-        param = param if param.pop() else []
-        return [int(p) for p in param] if isinstance(param, list) else [int(param)] if param else []
-
-    def _brand_s_query(self, *args, **kwargs):
-        query_filter = kwargs['query_filter']
-        brand_id_s = self._get_format_param(query_filter)
-        if brand_id_s:
-            brand_maker_id_s = self.BRAND_MAKER_MODEL.objects.filter(brand__in=brand_id_s). \
-                values_list('id', flat=True)
-            return {'brand__brand__in': brand_maker_id_s}
-        return {}
-
-    def _params_kv_query(self, query_filter, key):
-        qf = self._get_format_param(query_filter)
-        if qf:
-            product_id_s = self.product_set.values_list('id', flat=True)
-            product_kv_id_s = self.PRODUCT_PARAMS_KV_MODEL.objects. \
-                filter(product__in=product_id_s). \
-                filter(key=key). \
-                filter(value_hash__in=qf). \
-                values('pk', flat=True)
-            return {'params_kv__in': product_kv_id_s}
-        return {}
+                selected = str(params['selected']).split(',') if params.get('selected') else []
+                q = filter_obj.query_method
+                kv_key = filter_obj.kv_key
+                if q:
+                    self.product_set = getattr(self, q)(selected=selected, kv_key=kv_key)
+                elif selected:
+                    self.product_set = self.product_set.filter(**{'params_kv__value_hash__in': selected})
 
     def _set_order_s(self):
         order = self.params_storage['order']
