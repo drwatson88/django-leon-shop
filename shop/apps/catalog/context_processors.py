@@ -8,6 +8,7 @@ from .base import ShopCatalogParamsValidatorMixin
 
 
 PAGE_SIZE = 20
+PAGE_COUNTER_S = [30, 60, 90]
 CATEGORY_GRID_COUNT = 6
 MIN_PRICE = 0
 MAX_PRICE = 9999999
@@ -59,7 +60,8 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
     request_params_slots = {
         'order': [None, 'default'],
         'page': [None, 1],
-        'filter': [None, "{}"],
+        'filter': [None, {}],
+        'count': [None, PAGE_COUNTER_S[0]]
     }
 
     kwargs_params_slots = {
@@ -69,7 +71,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
     CATEGORY_SITE_MODEL = None
     PRODUCT_MODEL = None
     PRODUCT_PARAMS_KV_MODEL = None
-    FILTER_MODEL = None
+    ORDER_REFERENCE_MODEL = None
 
     def _category_query(self):
         self.category_s = self.CATEGORY_SITE_MODEL.get_root_nodes()
@@ -91,7 +93,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
         
         :return: 
         """
-        qdata = json.loads(self.params_storage['filter'])
+        qdata = self.params_storage['filter']
         self.filter_set = self.current_category.filter_s.all() or \
                           self.parent_category.filter_s.all()
         self.filter_set = self.filter_set
@@ -122,7 +124,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
                         '{0}__{0}__title'.format(filter_obj.code)))
                     obj_s.remove((None, None)) if (None, None) in obj_s else None
                     filter_input['item_s'] = [{'pk': k, 'title': v} for k, v in obj_s]
-                    filter_input['selected'] = selected if selected \
+                    filter_input['selected'] = [int(i) for i in selected] if selected \
                         else [item['pk'] for item in filter_input['item_s']]
             if filter_obj.type == 'KV':
                 kv_key = filter_obj.kv_key
@@ -140,14 +142,31 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
                         else [item['pk'] for item in filter_input['item_s']]
             self.filter_s.append(filter_input)
 
+    def _order_query_s(self):
+        self.order = {}
+        order_param = self.params_storage['order']
+        self.order['order_s'] = self.ORDER_REFERENCE_MODEL.objects.order_by('-position').all()
+        self.order['selected'] = order_param \
+            if order_param else 'default'
+
+    def _counter_query_s(self):
+        self.counter = {}
+        count_param = self.params_storage['count']
+        self.counter['count_s'] = [{'code': i, 'title': i} for i in PAGE_COUNTER_S]
+        self.counter['selected'] = count_param if count_param else 'ALL'
+
     def __call__(self, request):
         self.filter_s = []
         self.output_context = {
-            'filter_s': None
+            'filter_s': None,
+            'order': None,
+            'counter': None
         }
         self._init(request)
         self._category_query()
         self._product_query()
         self._filter_query_s()
+        self._order_query_s()
+        self._counter_query_s()
         self._aggregate()
         return self.output_context

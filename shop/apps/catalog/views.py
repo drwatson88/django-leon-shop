@@ -8,6 +8,7 @@ from .base import ShopCatalogBaseView, ShopCatalogParamsValidatorMixin
 
 
 PAGE_SIZE = 20
+PAGE_COUNTER_S = [30, 60, 90]
 CATEGORY_GRID_COUNT = 6
 MIN_PRICE = 0
 MAX_PRICE = 9999999
@@ -90,7 +91,8 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
     request_params_slots = {
         'order': [None, 'default'],
         'page': [None, 1],
-        'filter': [None, "{}"],
+        'filter': [None, {}],
+        'count': [None, PAGE_COUNTER_S[0]]
     }
 
     def __init__(self, *args, **kwargs):
@@ -120,7 +122,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
         :return: 
         """
-        qdata = json.loads(self.params_storage['filter'])
+        qdata = self.params_storage['filter']
         if not qdata:
             return
 
@@ -136,13 +138,13 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
                 if q:
                     self.product_set = getattr(self, q)()
                 else:
-                    if params.get('{}_from'.format(f)):
+                    if params.get('from'):
                         self.product_set = self.product_set.filter(
-                            **{'{}_gte'.format(f): params.get('{}_from'.format(f))}
+                            **{'{}__gte'.format(f): params.get('from'.format(f))}
                         )
-                    if params.get('{}_to'.format(f)):
+                    if params.get('to'):
                         self.product_set = self.product_set.filter(
-                            **{'{}_lte'.format(f): params.get('{}_to'.format(f))}
+                            **{'{}__lte'.format(f): params.get('to'.format(f))}
                         )
             if filter_obj.type in ['M2M', 'FK']:
                 selected = str(params['selected']).split(',') if params.get('selected') else []
@@ -150,7 +152,8 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
                 if q:
                     self.product_set = getattr(self, q)(selected=selected)
                 elif selected:
-                    self.product_set = self.product_set.filter(**{'{}__in'.format(filter_obj.code): selected})
+                    self.product_set = self.product_set.\
+                        filter(**{'{0}__{0}__pk__in'.format(filter_obj.code): [int(i) for i in selected]})
 
             if filter_obj.type == 'KV':
                 selected = str(params['selected']).split(',') if params.get('selected') else []
@@ -162,26 +165,21 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
                     self.product_set = self.product_set.filter(**{'params_kv__value_hash__in': selected})
 
     def _set_order_s(self):
-        order = self.params_storage['order']
-        self.order_s = self.ORDER_REFERENCE_MODEL.objects.order_by('-position').all()
-        for order_obj in self.order_s:
-            order_obj.selected = False
-            if order_obj.code == order:
-                order_obj.selected = True
-        order_selected = self.ORDER_REFERENCE_MODEL.objects.get(code=order)
-        self.order_name = order_selected.field_name \
+        order_param = self.params_storage['order'] or 'default'
+        order_selected = self.ORDER_REFERENCE_MODEL.objects.get(code=order_param)
+        order_name = order_selected.field_name \
             if order_selected.field_order else '-{}'.format(order_selected.field_name)
-        self.product_set = self.product_set.order_by(self.order_name)
+        self.product_set = self.product_set.order_by(order_name)
 
     def _product_s_pagination(self):
-        paginator = DiggPaginator(self.product_set, self.page_size)
+        paginator = DiggPaginator(self.product_set, self.params_storage['count'])
         self.page = paginator.page(self.params_storage['page'] or 1)
 
     def get(self, *args, **kwargs):
         self._category_s_query()
         self._product_s_query()
-        self._set_order_s()
         self._product_filter_s()
+        self._set_order_s()
         self._product_s_pagination()
         self._aggregate()
         return self._render()

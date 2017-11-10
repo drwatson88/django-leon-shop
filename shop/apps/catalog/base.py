@@ -64,6 +64,13 @@ class ShopCatalogParamsValidatorMixin(BaseParamsValidatorMixin):
         return value
 
     @staticmethod
+    def _count_validator(value, default):
+        if value:
+            return value
+        else:
+            return default
+
+    @staticmethod
     def _catalog_slug_title_validator(value, default):
         return value
 
