@@ -1,11 +1,11 @@
 # coding: utf-8
 
 
-from leon.base import BaseContextProcessor
+from leon.apps.base import BaseContextProcessor
 from .base import BasketParamsValidatorMixin
 
 
-class BasketMenuContextProcessor(BaseContextProcessor, BasketParamsValidatorMixin):
+class ShopBasketMenuContextProcessor(BaseContextProcessor, BasketParamsValidatorMixin):
 
     """
     Class for block context processor menu
@@ -14,17 +14,37 @@ class BasketMenuContextProcessor(BaseContextProcessor, BasketParamsValidatorMixi
     kwargs_params_slots = {
     }
 
-    CATEGORY_SITE_MODEL = None
+    request_params_slots = {
+        'basket': [None, {}]
+    }
 
-    def _create_data(self, request):
-        self.basket = self.BASKET_MODEL.get_current(request)
+    PRODUCT_MODEL = None
+    BASKET_CONTAINER = None
+
+    def _set_basket(self, request):
+        self.basket = self.BASKET_CONTAINER(request.session, request.user)
+
+    def _update_all(self):
+        item_s = self.params_storage['basket'].get('item_s', [])
+        if not item_s:
+            return
+        for item in item_s:
+            product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])
+            quantity = item['quantity']
+            self.basket.update(product, quantity)
+
+        remove_item_s = set(item.product.pk for item in self.basket.item_s()) - \
+                        set(item['pk'] for item in item_s)
+        for product_pk in remove_item_s:
+            product = self.PRODUCT_MODEL.objects.get(pk=product_pk)
+            self.basket.remove(product)
 
     def __call__(self, request):
-        self.main_menu = {}
         self.output_context = {
             'basket': None
         }
         self._init(request)
-        self._create_data(request)
+        self._set_basket(request)
+        self._update_all()
         self._aggregate()
         return self.output_context

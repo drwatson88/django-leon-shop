@@ -27,7 +27,7 @@ class BasketParamsValidatorMixin(BaseParamsValidatorMixin):
     @staticmethod
     def _basket_validator(value, default):
         try:
-            return value
+            return json.loads(value)
         except BaseException as exc:
             return default
 

@@ -49,8 +49,6 @@ class ShopBasketItem(models.Model):
     """
 
     quantity = models.PositiveIntegerField(verbose_name='Количество', blank=True, null=True)
-    image = models.ImageField(verbose_name='Путь к файлу картинки', blank=True,
-                              null=True, max_length=255)
 
     @classmethod
     def add_item(cls, basket, product, quantity):
@@ -58,6 +56,9 @@ class ShopBasketItem(models.Model):
 
     def total(self):
         return self.product.price * self.quantity
+
+    def get_image(self):
+        return self.product.main_image()
 
     class Meta:
         abstract = True

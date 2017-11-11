@@ -51,17 +51,15 @@ class ShopBasketContainer(object):
         data = {'creation_date': datetime.datetime.now()}
         if user.is_authenticated():
             data.update({'user': user})
-        else:
-            data.update({'session_id': session.session_key})
+
+        data.update({'session_id': session.session_key})
         basket = self.BASKET_MODEL(**data)
         basket.save()
         return basket
 
     @staticmethod
     def get_image(product):
-        return product.small_image \
-               or product.big_image \
-               or product.super_big_image
+        return product.main_image()
 
     def add_item(self, product, quantity=1):
         item = self.BASKET_ITEM_MODEL.objects.filter(basket=self.basket,
@@ -70,31 +68,24 @@ class ShopBasketContainer(object):
         if item:
             item.quantity += int(quantity)
         else:
-            item = self.BASKET_ITEM_MODEL(cart=self.basket,
+            item = self.BASKET_ITEM_MODEL(basket=self.basket,
                                           product=product,
-                                          quantity=quantity,
-                                          image=self.get_image(product))
+                                          quantity=quantity)
         item.save()
 
-    def remove(self, product, ):
-        item_s = self.ITEM_MODEL.objects.filter(cart=self.id,
-                                                product=product).all()
-        if item_s:
-            item = item_s[0]
+    def remove(self, product):
+        item = self.BASKET_ITEM_MODEL.objects.filter(basket=self.basket, product=product).first()
+        if item:
             item.delete()
         else:
             raise ItemDoesNotExist
 
-    def update(self, product, quantity=1, print_type=None):
-        item_s = self.ITEM_MODEL.objects.filter(cart=self.id,
-                                                product=product).all()
-        if item_s:
-            item = item_s[0]
-        else:
-            item = self.ITEM_MODEL(cart=self.id,
-                                   product=product,
-                                   quantity=quantity,
-                                   image=self.get_image(product))
+    def update(self, product, quantity=1):
+        item = self.BASKET_ITEM_MODEL.objects.filter(basket=self.basket, product=product).first()
+        if not item:
+            item = self.BASKET_ITEM_MODEL(basket=self.basket,
+                                          product=product,
+                                          quantity=quantity)
         item.quantity = quantity
         item.save()
 

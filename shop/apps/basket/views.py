@@ -6,7 +6,7 @@ from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
 from .base import BasketBaseView, BasketParamsValidatorMixin
 
 
-class ShopBasketInsideView(BasketBaseView, BasketParamsValidatorMixin):
+class ShopBasketView(BasketBaseView, BasketParamsValidatorMixin):
 
     """ Basket Inside View. Receives get params
         and response neither arguments in get
@@ -28,10 +28,11 @@ class ShopBasketInsideView(BasketBaseView, BasketParamsValidatorMixin):
         ALL PARAMS put in params_storage after validate
     """
 
+    PRODUCT_MODEL = None
     BASKET_CONTAINER = None
-    TEMPLATE_NAME = None
 
     request_params_slots = {
+        'basket': [None, {}]
     }
 
     session_params_slots = {
@@ -40,76 +41,32 @@ class ShopBasketInsideView(BasketBaseView, BasketParamsValidatorMixin):
     def __init__(self, *args, **kwargs):
         self.params_storage = {}
         self.output_context = {
-            'basket': None,
-            'total_price': None
+            'basket': None
         }
-        super(ShopBasketInsideView, self).__init__(*args, **kwargs)
+        super(ShopBasketView, self).__init__(*args, **kwargs)
 
     def _set_basket(self):
         self.basket = self.BASKET_CONTAINER(self.request.session, self.request.user)
 
-    def _basket_update_all(self):
-        self.basket.calculate()
-        self.total_price = str(abs(self.basket.price))
+    def _update_all(self):
+        item_s = self.params_storage['basket'].get('item_s', [])
+        if not item_s:
+            return
+        for item in item_s:
+            product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])
+            quantity = item['quantity']
+            self.basket.update(product, quantity)
+
+        remove_item_s = set(item.product.pk for item in self.basket.item_s()) - \
+                        set(item['pk'] for item in item_s)
+        for product_pk in remove_item_s:
+            product = self.PRODUCT_MODEL.objects.get(pk=product_pk)
+            self.basket.remove(product)
 
     def get(self, *args, **kwargs):
         self._set_basket()
-        # self._basket_update_all()
+        self._update_all()
         self._aggregate()
-
-        return self._render()
-
-
-class ShopBasketMenuView(BasketBaseView, BasketParamsValidatorMixin):
-
-    """ Basket Menu View. Receives get params
-        and response neither arguments in get
-        request params.
-        Cart Menu using in corner ia all pages,
-        and this is relate with your session. This
-        class using onle by ajax.
-
-        GET Params:
-
-        1. ITEM_S - list of dicts of items with params
-        (
-            id: id of product/subproduct,
-            count: count of product,
-            print_type_id: id of print_type
-        )
-
-        ALL PARAMS put in params_storage after validate
-    """
-
-    BASKET_CONTAINER = None
-    TEMPLATE_NAME = None
-
-    request_params_slots = {
-    }
-
-    session_params_slots = {
-    }
-
-    def __init__(self, *args, **kwargs):
-        self.params_storage = {}
-        self.output_context = {
-            'basket': None,
-            'total_price': None
-        }
-        super(ShopBasketMenuView, self).__init__(*args, **kwargs)
-
-    def _set_basket(self):
-        self.basket = self.BASKET_CONTAINER(self.request.session, self.request.user)
-
-    def _basket_update_all(self):
-        self.basket.calculate()
-        self.total_price = str(abs(self.basket.price))
-
-    def get(self, *args, **kwargs):
-        self._set_basket()
-        # self._basket_update_all()
-        self._aggregate()
-
         return self._render()
 
 
