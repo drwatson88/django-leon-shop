@@ -257,8 +257,8 @@ class ShopProductParamsKV(models.Model):
         unique_together = ('product', 'abbr')
     """
 
-    abbr = models.CharField(verbose_name='Название поля (поиск)', max_length=255)
-    name = models.CharField(verbose_name='Имя поля', max_length=255)
+    code = models.CharField(verbose_name='Код поля', max_length=255)
+    title = models.CharField(verbose_name='Имя поля', max_length=255)
     value = models.CharField(verbose_name='Значение поля', max_length=4000)
     value_hash = models.IntegerField(verbose_name='Хэш значение поля')
     position = models.IntegerField(verbose_name='Порядок', null=True)

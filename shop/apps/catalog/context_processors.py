@@ -134,7 +134,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
                 if q:
                     filter_input = getattr(self, q)(selected=selected, kv_key=kv_key)
                 else:
-                    obj_s = set(self.product_set.filter(params_kv__key=kv_key).
+                    obj_s = set(self.product_set.filter(params_kv__code=kv_key).
                                 values_list('params_kv__value_hash', 'params_kv__value'))
                     obj_s.remove((None, None)) if (None, None) in obj_s else None
                     filter_input['item_s'] = [{'pk': k, 'title': v} for k, v in obj_s]

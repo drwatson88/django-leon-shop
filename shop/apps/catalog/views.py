@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
+
 import json
 from digg_paginator import DiggPaginator
 from django.shortcuts import get_object_or_404, HttpResponse
+from django.http import JsonResponse
 
 from .base import ShopCatalogBaseView, ShopCatalogParamsValidatorMixin
 
@@ -83,6 +85,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
     page_size = PAGE_SIZE
     context_processors = []
+    template_popup_change = {}
 
     kwargs_params_slots = {
         'catalog_slug_title': [None, ''],
@@ -92,7 +95,8 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         'order': [None, 'default'],
         'page': [None, 1],
         'filter': [None, {}],
-        'count': [None, PAGE_COUNTER_S[0]]
+        'count': [None, PAGE_COUNTER_S[0]],
+        'grid': [None, 0]
     }
 
     def __init__(self, *args, **kwargs):
@@ -172,8 +176,19 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         self.product_set = self.product_set.order_by(order_name)
 
     def _product_s_pagination(self):
-        paginator = DiggPaginator(self.product_set, self.params_storage['count'])
-        self.page = paginator.page(self.params_storage['page'] or 1)
+        count = self.params_storage['count']
+        count = count if count != 'ALL' else None
+
+        if count:
+            paginator = DiggPaginator(self.product_set, self.params_storage['count'])
+            self.page = paginator.page(self.params_storage['page'] or 1)
+        else:
+            self.page = {'object_list': self.product_set}
+
+    def _set_view_template(self):
+        if self.popup:
+            self.template_popup['grid'] = self.template_popup_change.get(
+                'list' if self.params_storage['grid'] else 'grid')
 
     def get(self, *args, **kwargs):
         self._category_s_query()
@@ -181,6 +196,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         self._product_filter_s()
         self._set_order_s()
         self._product_s_pagination()
+        self._set_view_template()
         self._aggregate()
         return self._render()
 
@@ -209,7 +225,6 @@ class ShopProductInsideView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin
     }
 
     request_params_slots = {
-        'ajax': [None, 0],
         'product_stock': [None, 0],
     }
 
@@ -303,9 +318,9 @@ class ShopProductAddToBasketView(ShopCatalogBaseView, ShopCatalogParamsValidator
 
     def _calc_update(self):
         basket = self.BASKET_CONTAINER(self.request.session, self.request.user)
-        self.item_s = json.loads(self.params_storage['item_s'])
+        item_s = json.loads(self.params_storage['item_s'])
         total_price = 0
-        for item in self.item_s:
+        for item in item_s:
             product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])
             quantity = int(item['stock'])
             total_price += product.price * quantity
@@ -335,29 +350,28 @@ class ShopProductInsideCalcView(ShopCatalogBaseView, ShopCatalogParamsValidatorM
     PRODUCT_MODEL = None
 
     request_params_slots = {
-        'item_s': [None, 0]
+        'product': [None, {}]
     }
 
     def __init__(self, *args, **kwargs):
         self.params_storage = {}
         self.output_context = {
-            'total_price': None
+            'product_total': None
         }
         super(ShopProductInsideCalcView, self).__init__(*args, **kwargs)
         self.item_s = None
-        self.total_price = None
+        self.product_total = None
 
     def _calc_update(self):
-        self.item_s = json.loads(self.params_storage['item_s'])
+        item_s = self.params_storage['product'].get('item_s')
         total_price = 0
-        for item in self.item_s:
+        for item in item_s:
             product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])
             quantity = int(item['stock'])
             total_price += product.price * quantity
-        self.total_price = str(abs(total_price))
+        self.product_total = str(abs(total_price))
 
     def get(self, *args, **kwargs):
         self._calc_update()
         self._aggregate()
-        return HttpResponse(json.dumps(self.output_context))
-
+        return JsonResponse(self.output_context)

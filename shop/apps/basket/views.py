@@ -32,6 +32,7 @@ class ShopBasketView(BasketBaseView, BasketParamsValidatorMixin):
     BASKET_CONTAINER = None
 
     request_params_slots = {
+        'empty': [None, False],
         'basket': [None, {}]
     }
 
@@ -50,7 +51,7 @@ class ShopBasketView(BasketBaseView, BasketParamsValidatorMixin):
 
     def _update_all(self):
         item_s = self.params_storage['basket'].get('item_s', [])
-        if not item_s:
+        if not self.popup or self.params_storage['empty']:
             return
         for item in item_s:
             product = self.PRODUCT_MODEL.objects.get(pk=item['pk'])

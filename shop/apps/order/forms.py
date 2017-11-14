@@ -4,7 +4,7 @@
 from django.forms import forms, fields
 
 
-class ShopDeliveryCityServiceForm(forms.Form):
+class ShopDeliveryServiceForm(forms.Form):
 
     pass
 
@@ -27,3 +27,16 @@ class ShopCourierContactForm(ShopShortContactForm):
 class ShopFullContactForm(ShopCourierContactForm):
 
     pass
+
+
+class ShopPaymentForm(forms.Form):
+
+    is_prepaid = fields.CharField(required=False, widget=fields.HiddenInput)
+    step_name = u'Выберите способ оплаты'
+
+
+class ShopConfirmForm(forms.Form):
+
+    step_name = u'Подтвердите заказ'
+
+

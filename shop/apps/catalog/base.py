@@ -19,12 +19,7 @@ class ShopCatalogParamsValidatorMixin(BaseParamsValidatorMixin):
 
     @staticmethod
     def _grid_validator(value, default):
-        if value == 'grid':
-            return 1
-        elif value == 'list':
-            return 0
-        else:
-            return 1
+        return int(value) if value and int(value) else default
 
     @staticmethod
     def _grid_cnt_validator(value, default):
@@ -46,6 +41,13 @@ class ShopCatalogParamsValidatorMixin(BaseParamsValidatorMixin):
 
     @staticmethod
     def _filter_validator(value, default):
+        try:
+            return json.loads(value)
+        except BaseException as exc:
+            return default
+
+    @staticmethod
+    def _product_validator(value, default):
         try:
             return json.loads(value)
         except BaseException as exc:

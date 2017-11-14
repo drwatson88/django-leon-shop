@@ -64,7 +64,6 @@ class ShopBasketContainer(object):
     def add_item(self, product, quantity=1):
         item = self.BASKET_ITEM_MODEL.objects.filter(basket=self.basket,
                                                      product=product).first()
-
         if item:
             item.quantity += int(quantity)
         else:
@@ -122,9 +121,9 @@ class ShopBasketContainer(object):
             total += item.total()
         return total
 
-    def item_count(self):
+    def count(self):
         total = 0
-        for item in self.basket.item_set.all():
+        for item in self.basket.item.all():
             total += item.quantity
         return total
 

@@ -31,6 +31,10 @@ class BasketParamsValidatorMixin(BaseParamsValidatorMixin):
         except BaseException as exc:
             return default
 
+    @staticmethod
+    def _empty_validator(value, default):
+        return value or default
+
 
 class BasketBaseView(BaseView):
 

@@ -2,10 +2,10 @@
 
 
 from formtools.wizard.views import WizardView
-from leon.base import BaseView, ParamsValidatorMixin
+from leon.apps.base import BaseView, BaseParamsValidatorMixin
 
 
-class OrderParamsValidatorMixin(ParamsValidatorMixin):
+class OrderParamsValidatorMixin(BaseParamsValidatorMixin):
 
     """ Mixin with validators for validate
         request parameters.

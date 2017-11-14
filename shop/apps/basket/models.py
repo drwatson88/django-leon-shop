@@ -52,7 +52,8 @@ class ShopBasketItem(models.Model):
 
     @classmethod
     def add_item(cls, basket, product, quantity):
-        cls.objects.update_or_create(basket=basket, product=product, quantity=quantity)
+        item = cls.objects.update_or_create(basket=basket, product=product, quantity=quantity)
+        item.save()
 
     def total(self):
         return self.product.price * self.quantity
