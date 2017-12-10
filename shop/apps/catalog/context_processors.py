@@ -8,7 +8,7 @@ from .base import ShopCatalogParamsValidatorMixin
 
 
 PAGE_SIZE = 20
-PAGE_COUNTER_S = [30, 60, 90]
+PAGE_COUNTER_S = [9, 18, 30, 60, 90]
 CATEGORY_GRID_COUNT = 6
 MIN_PRICE = 0
 MAX_PRICE = 9999999
@@ -138,8 +138,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
                                 values_list('params_kv__value_hash', 'params_kv__value'))
                     obj_s.remove((None, None)) if (None, None) in obj_s else None
                     filter_input['item_s'] = [{'pk': k, 'title': v} for k, v in obj_s]
-                    filter_input['selected'] = selected if selected \
-                        else [item['pk'] for item in filter_input['item_s']]
+                    filter_input['selected'] = selected
             self.filter_s.append(filter_input)
 
     def _order_query_s(self):

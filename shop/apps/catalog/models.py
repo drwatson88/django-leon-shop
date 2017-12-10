@@ -14,11 +14,9 @@ from leon.apps.base.models import BaseStatusMixin
 class ShopMaker(models.Model):
 
     title = models.CharField(verbose_name='Наименование поставщика', max_length=255)
-    code = models.CharField(verbose_name='Уникальный идентификатор', max_length=255, unique=True)
+    code = models.CharField(verbose_name='Уникальный идентификатор', max_length=255, primary_key=True)
 
     def save(self, **kwargs):
-        if not self.id:
-            self.name = slugify(self.title)
         super(ShopMaker, self).save(**kwargs)
 
     class Meta:
@@ -72,7 +70,7 @@ class ShopBrandMaker(models.Model):
 class ShopCategorySite(MP_Node):
 
     title = models.CharField(verbose_name='Заголовок', max_length=255)
-    slug_title = models.SlugField(verbose_name='Имя для ссылки', unique=True, blank=True)
+    slug_title = models.SlugField(verbose_name='Имя для ссылки', unique=True, blank=True, null=True)
     preview = models.TextField(verbose_name='Краткое описание', blank=True, null=True)
     content = models.TextField(verbose_name='Описание', blank=True, null=True)
     show = models.BooleanField(verbose_name='Показывать', default=True)
@@ -131,7 +129,7 @@ class ShopCategoryXML(MP_Node, BaseStatusMixin):
         return u'{}{} ({})'.format((self.depth - 1) * u'---', self.title, self.maker)
 
 
-class ShopProduct(models.Model):
+class ShopProduct(BaseStatusMixin):
     """
     Additions:
         maker = models.ForeignKey(Maker, verbose_name='Поставщик')
@@ -165,17 +163,16 @@ class ShopProduct(models.Model):
     parent = models.ForeignKey("self", verbose_name='Основной продукт', blank=True, null=True,
                                on_delete=models.CASCADE, related_name='children_set')
     title = models.CharField(verbose_name='Заголовок', max_length=255, blank=False)
-    prov_product_id = models.CharField(verbose_name='ИД', max_length=50, blank=True)
-    prov_main_product_id = models.CharField(verbose_name='ИД родителя', max_length=50)
+    prov_product_id = models.CharField(verbose_name='ИД', max_length=50, blank=True, null=True)
+    prov_main_product_id = models.CharField(verbose_name='ИД родителя', max_length=50, blank=True, null=True)
     slug_title = models.SlugField(verbose_name='Имя для ссылки', max_length=255,
                                   blank=True, unique=True)
-    code = models.CharField(verbose_name='Артикул', max_length=50, blank=True)
-    content = models.TextField(verbose_name='Описание', blank=True)
-    long_content = models.TextField(verbose_name='Полное описание', blank=True)
+    code = models.CharField(verbose_name='Артикул', max_length=50, blank=True, null=True)
+    content = models.TextField(verbose_name='Описание', blank=True, null=True)
+    long_content = models.TextField(verbose_name='Полное описание', blank=True, null=True)
     price = models.DecimalField(verbose_name='Цена', decimal_places=2, max_digits=10,
                                 null=True)
     stock = models.IntegerField(verbose_name='Остаток', null=True, blank=True, default=None)
-    show = models.BooleanField(verbose_name='Показывать', default=True)
     import_fl = models.BooleanField(verbose_name='Импортирован в базу', default=False)
 
     def get_price(self):
@@ -271,6 +268,7 @@ class ShopProductAttachment(models.Model):
     """
     Additions:
         product = models.ForeignKey(Product, verbose_name='Товар', related_name='attachment')
+        unique_together = ('product', 'position', 'meaning')
     """
 
     MEANINGS = (
@@ -279,17 +277,19 @@ class ShopProductAttachment(models.Model):
     )
 
     def product_attachment_upload_path(self):
-        return os.path.join('upload_attachment', self.maker.name, '{}{}'.
-                            format(hashlib.md5(slugify(self.desc).
-                                               encode(encoding='utf-8')).hexdigest(), '.jpg'))
+        return os.path.join('upload_attachment',
+                            self.maker.name,
+                            '{}{}{}{}'.format(self.product.pk, self.meaning, self.position, '.jpg'))
 
     meaning = models.IntegerField(verbose_name='Тип файла', choices=MEANINGS)
-    href = models.ImageField(verbose_name='URL картинки',
-                             upload_to=product_attachment_upload_path,
-                             blank=True)
-    type = models.CharField(verbose_name='Тип', max_length=20)
-    desc = models.CharField(verbose_name='Описание', max_length=255)
-    position = models.IntegerField(verbose_name='Порядок', null=True)
+    src = models.ImageField(verbose_name='Ссылка на ресурс',
+                            upload_to=product_attachment_upload_path,
+                            max_length=255,
+                            blank=True,
+                            null=True)
+    href = models.CharField(verbose_name='URL картинки', max_length=255, blank=True, null=True)
+    desc = models.CharField(verbose_name='Описание', max_length=255, blank=True, null=True)
+    position = models.IntegerField(verbose_name='Порядок', null=False)
 
     def save(self, **kwargs):
         self.maker = self.product.maker

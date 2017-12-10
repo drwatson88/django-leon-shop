@@ -10,7 +10,7 @@ from .base import ShopCatalogBaseView, ShopCatalogParamsValidatorMixin
 
 
 PAGE_SIZE = 20
-PAGE_COUNTER_S = [30, 60, 90]
+PAGE_COUNTER_S = [9, 18, 30, 60, 90]
 CATEGORY_GRID_COUNT = 6
 MIN_PRICE = 0
 MAX_PRICE = 9999999
@@ -144,11 +144,11 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
                 else:
                     if params.get('from'):
                         self.product_set = self.product_set.filter(
-                            **{'{}__gte'.format(f): params.get('from'.format(f))}
+                            **{'{}__gte'.format(f): params.get('from')}
                         )
                     if params.get('to'):
                         self.product_set = self.product_set.filter(
-                            **{'{}__lte'.format(f): params.get('to'.format(f))}
+                            **{'{}__lte'.format(f): params.get('to')}
                         )
             if filter_obj.type in ['M2M', 'FK']:
                 selected = str(params['selected']).split(',') if params.get('selected') else []

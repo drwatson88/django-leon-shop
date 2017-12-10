@@ -8,7 +8,7 @@ from leon.apps.base.models import BaseUidMixin, BaseStatusMixin, BasePositionMix
 
 class ShopDeliveryCompany(BaseUidMixin, BaseStatusMixin, BasePositionMixin):
 
-    name = models.CharField(verbose_name='Название компании', max_length=250)
+    title = models.CharField(verbose_name='Название компании', max_length=250)
     code = models.CharField(verbose_name='ID компании', max_length=100)
 
     class Meta:
@@ -57,12 +57,11 @@ class ShopOrder(models.Model):
 
     creation_date = models.DateTimeField(verbose_name=u'creation date', default=datetime.now)
     checked_out = models.BooleanField(default=False, verbose_name=u'checked out')
-    first_name = models.CharField(verbose_name='Имя', max_length=50)
-    middle_name = models.CharField(verbose_name='Отчество', max_length=50)
-    last_name = models.CharField(verbose_name='Фамилия', max_length=50)
+    name = models.CharField(verbose_name='Имя', max_length=50)
 
     email = models.EmailField(verbose_name='Почта', max_length=50)
     phone = models.CharField(verbose_name='Телефон', max_length=30)
+    comment = models.CharField(verbose_name='Комментарии', max_length=30)
 
     region = models.CharField(verbose_name='Регион', max_length=50)
     area = models.CharField(verbose_name='Область', max_length=50)

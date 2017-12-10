@@ -2,10 +2,10 @@
 
 
 from formtools.wizard.views import NamedUrlSessionWizardView
-from .base import OrderBaseView, OrderParamsValidatorMixin
+from .base import OrderBaseWizardView, OrderParamsValidatorMixin
 
 
-class ShopOrderView(OrderBaseView, OrderParamsValidatorMixin):
+class ShopOrderView(OrderBaseWizardView, OrderParamsValidatorMixin):
     """ Category List View. Receives get params
         and response neither arguments in get
         request params.
@@ -39,7 +39,7 @@ class ShopOrderView(OrderBaseView, OrderParamsValidatorMixin):
         return self._render()
 
 
-class ShopOrderWizardView(NamedUrlSessionWizardView):
+class ShopOrderWizardView(OrderBaseWizardView):
 
     """
 
@@ -75,7 +75,11 @@ class ShopOrderWizardView(NamedUrlSessionWizardView):
         return super(ShopOrderWizardView, self).get_context_data(form=form, **kwargs)
 
     def render(self, form=None, **kwargs):
-        return super(ShopOrderWizardView, self).render(form, **kwargs)
+        form = form or self.get_form()
+        context = self.get_context_data(form=form, **kwargs)
+        self.output_context.update(context)
+        return self._render()
 
     def done(self, form_list, **kwargs):
         pass
+

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from formtools.wizard.views import WizardView
+from formtools.wizard.views import NamedUrlSessionWizardView
 from leon.apps.base import BaseView, BaseParamsValidatorMixin
 
 
@@ -19,7 +19,7 @@ class OrderParamsValidatorMixin(BaseParamsValidatorMixin):
             return default
 
 
-class OrderBaseView(WizardView, BaseView):
+class OrderBaseWizardView(NamedUrlSessionWizardView, BaseView):
 
     """ Class Base for all Catalog Class Views
         When request is received, then
@@ -28,7 +28,7 @@ class OrderBaseView(WizardView, BaseView):
     @classmethod
     def as_view(cls, *args, **kwargs):
         cls._install_validate_s()
-        return WizardView.as_view(*args, **kwargs)
+        return super(OrderBaseWizardView, cls).as_view(*args, **kwargs)
 
     def done(self, form_list, **kwargs):
         pass
