@@ -32,3 +32,13 @@ class OrderBaseWizardView(NamedUrlSessionWizardView, BaseView):
 
     def done(self, form_list, **kwargs):
         pass
+
+
+class OrderBaseView(BaseView):
+
+    """ Class Base for all Catalog Class Views
+        When request is received, then
+    """
+
+    pass
+

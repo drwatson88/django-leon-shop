@@ -20,9 +20,10 @@ class ShopDeliveryCompany(BaseUidMixin, BaseStatusMixin, BasePositionMixin):
 class ShopDeliveryCity(BaseUidMixin, BaseStatusMixin):
 
     name = models.CharField(verbose_name='Название города', max_length=250)
-    kladr = models.CharField(verbose_name='ФИАС', max_length=15)
-    fias = models.CharField(verbose_name='ФИАС', max_length=15)
-    address = models.CharField(verbose_name='Адрес', max_length=250)
+    kladr = models.CharField(verbose_name='ФИАС', max_length=15, null=True, blank=True)
+    fias = models.CharField(verbose_name='ФИАС', max_length=15, null=True, blank=True)
+    address = models.CharField(verbose_name='Адрес', max_length=250, null=True, blank=True)
+    is_main = models.BooleanField(verbose_name='В списке главных', default=False)
 
     class Meta:
         abstract = True
@@ -55,7 +56,7 @@ class ShopOrder(models.Model):
         user = models.ForeignKey(User)
     """
 
-    creation_date = models.DateTimeField(verbose_name=u'creation date', default=datetime.now)
+    creation_date = models.DateTimeField(verbose_name='creation date', default=datetime.now)
     checked_out = models.BooleanField(default=False, verbose_name=u'checked out')
     name = models.CharField(verbose_name='Имя', max_length=50)
 

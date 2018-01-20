@@ -84,8 +84,8 @@ class ShopCategorySite(MP_Node):
         return super(ShopCategorySite, self).get_children().filter(show=True)
 
     def save(self, **kwargs):
-        if not self.id:
-            self.slug_title = slugify(self.title)
+        # if not self.id:
+        #     self.slug_title = slugify(self.title)
         super(ShopCategorySite, self).save(**kwargs)
 
     class Meta:
@@ -188,10 +188,10 @@ class ShopProduct(BaseStatusMixin):
         return self.children_set
 
     def photo_s(self):
-        return self.attachment.filter(meaning=1).order_by('position').all()
+        return self.attachment.filter(meaning=0).order_by('position').all()
 
     def main_image(self):
-        return self.attachment.filter(meaning=1).order_by('position').first()
+        return self.attachment.filter(meaning=0).order_by('position').first()
 
     def save(self, **kwargs):
         if not self.id and not self.import_fl:

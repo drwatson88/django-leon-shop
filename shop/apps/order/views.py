@@ -1,8 +1,9 @@
 # coding: utf-8
 
-
-from formtools.wizard.views import NamedUrlSessionWizardView
-from .base import OrderBaseWizardView, OrderParamsValidatorMixin
+import json
+from django.shortcuts import HttpResponse
+from django.contrib.sessions.backends.db import SessionStore
+from .base import OrderBaseWizardView, OrderParamsValidatorMixin, OrderBaseView
 
 
 class ShopOrderView(OrderBaseWizardView, OrderParamsValidatorMixin):
@@ -83,3 +84,35 @@ class ShopOrderWizardView(OrderBaseWizardView):
     def done(self, form_list, **kwargs):
         pass
 
+
+class ShopOrderUserCityView(OrderBaseView):
+
+    """ Product User City View.
+    """
+
+    CITY_MODEL = None
+
+    request_params_slots = {
+        'city_id': [None, 0]
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.params_storage = {}
+        self.output_context = {
+            '': None
+        }
+        super(ShopOrderUserCityView, self).__init__(*args, **kwargs)
+
+    def _session_init(self):
+        session_key = self.request.session
+        self.session_store = SessionStore(session_key=session_key)
+
+    def _city_init(self):
+        city_id = self.params_storage['city_id']
+        self.session_store['city_id'] = city_id if city_id else None
+
+    def get(self, *args, **kwargs):
+        self._session_init()
+        self._city_init()
+        self._aggregate()
+        return HttpResponse(json.dumps(self.output_context))

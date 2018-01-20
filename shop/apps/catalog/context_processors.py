@@ -2,6 +2,7 @@
 
 
 import json
+import re
 from django.db.models import Max, Min
 from leon.apps.base import BaseContextProcessor
 from .base import ShopCatalogParamsValidatorMixin
@@ -26,25 +27,33 @@ class ShopCatalogMenuContextProcessor(BaseContextProcessor, ShopCatalogParamsVal
     }
 
     CATEGORY_SITE_MODEL = None
+    NAV_MENU_LIMIT = 10
 
     def _create_data(self):
-        self.menu_catalog_category_s = self.CATEGORY_SITE_MODEL.get_root_nodes()
-        self.menu_catalog_current_category = self.CATEGORY_SITE_MODEL.objects.filter(
+        self.category_s = self.CATEGORY_SITE_MODEL.get_root_nodes()
+        self.current = self.CATEGORY_SITE_MODEL.objects.filter(
             slug_title=self.params_storage['catalog_slug_title']).first()
-        self.menu_catalog_parent_category = self.menu_catalog_current_category.get_parent()
+        self.parent = self.current.get_parent() if self.current else {}
 
-        if not self.menu_catalog_parent_category:
-            self.menu_catalog_parent_category = self.menu_catalog_current_category
-            self.menu_catalog_parent_category.selected = True
-        else:
-            self.menu_catalog_parent_category.selected = False
+        if not self.parent and self.current:
+            self.parent = self.current
+            self.parent.selected = True
+        self.catalog_menu = {
+            'nav_next_set': self._nav_next_set,
+            'category_s': self.category_s,
+            'current': self.current,
+            'parent': self.parent
+        }
+
+    def _nav_next_set(self):
+        for i in range(len(self.category_s) // self.NAV_MENU_LIMIT + 1):
+            cat_set = self.category_s[i*self.NAV_MENU_LIMIT:(i+1)*self.NAV_MENU_LIMIT]
+            yield zip(cat_set, range(len(cat_set))), i
 
     def __call__(self, request):
-        self.main_menu = {}
+        self.catalog_menu = {}
         self.output_context = {
-            'menu_catalog_category_s': None,
-            'menu_catalog_current_category': None,
-            'menu_catalog_parent_category': None
+            'catalog_menu': None
         }
         self._init(request)
         self._create_data()
@@ -167,5 +176,99 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
         self._filter_query_s()
         self._order_query_s()
         self._counter_query_s()
+        self._aggregate()
+        return self.output_context
+
+
+class ShopCatalogBreadcrumbContextProcessor(BaseContextProcessor):
+
+    """
+    Class for breadcrumb context processor menu
+    """
+
+    PRODUCT_MODEL = None
+    CATEGORY_MODEL = None
+
+    def _init(self, request):
+        super(ShopCatalogBreadcrumbContextProcessor, self)._init(request)
+        self.request = request
+
+    def _create_data(self):
+        self.breadcrumb_s = []
+        self._parse_url()
+        self.breadcrumb_s.append({
+            'title': 'Каталог',
+            'url': '/'
+        })
+        self.breadcrumb_s = reversed(self.breadcrumb_s)
+
+    def _parse_url(self):
+        ptn = re.compile(r'/(?P<section>\w+)/(?P<object_slug>.+)//?')
+        match = ptn.match(self.request.path)
+        gd = match.groupdict() if match else {}
+        section = gd.get('section')
+        object_slug = gd.get('object_slug', '')
+
+        if section == 'product':
+            self._set_product(object_slug)
+        if section == 'category':
+            self._set_category(object_slug)
+
+    def _set_product(self, slug):
+        try:
+            product = self.PRODUCT_MODEL.objects.get(slug_title=slug)
+        except:
+            raise
+
+        self.breadcrumb_s.append({
+            'title': product.title,
+            'url': None
+        })
+
+        xml_cat = product.category_xml.first()
+        last_cat = xml_cat.category_site if xml_cat else None
+        if last_cat:
+            self.breadcrumb_s.append({
+                'title': last_cat.title,
+                'url': last_cat.get_absolute_url()
+            })
+            for i in range(1, last_cat.depth):
+                last_cat = last_cat.get_parent()
+                self.breadcrumb_s.append({
+                    'title': last_cat.title,
+                    'url': last_cat.get_absolute_url()
+                })
+
+    def _set_category(self, slug):
+        try:
+            category = self.CATEGORY_MODEL.objects.get(slug_title=slug)
+        except:
+            raise
+
+        last_cat = category
+        if last_cat:
+            self.breadcrumb_s.append({
+                'title': last_cat.title,
+                'url': ''
+            })
+            for i in range(1, last_cat.depth):
+                last_cat = last_cat.get_parent()
+                self.breadcrumb_s.append({
+                    'title': last_cat.title,
+                    'url': last_cat.get_absolute_url()
+                })
+
+    def _popup(self):
+        return 'popup' in self.request.path
+
+    def __call__(self, request):
+        self.header = {}
+        self.output_context = {
+            'breadcrumb_s': None
+        }
+        self._init(request)
+        if self._popup():
+            return {}
+        self._create_data()
         self._aggregate()
         return self.output_context

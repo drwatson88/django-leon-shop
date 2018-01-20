@@ -18,33 +18,33 @@ class DiscountMixin(object):
     pass
 
 
-class ShopBasketContainer(object):
+class ShopOrderContainer(object):
 
-    """ Class for operate basket in session.
+    """ Class for operate order in session.
         Using request.session dict, where
-        find BASKET_ID and if basket object
+        find ORDER_ID and if order object
         not expired and find, return it,
         else, create new object cart.
     """
 
-    BASKET_MODEL = None
-    BASKET_ITEM_MODEL = None
+    ORDER_MODEL = None
+    ORDER_ITEM_MODEL = None
 
     def __init__(self, session, user):
-        basket = self.BASKET_MODEL
+        order = self.ORDER_MODEL
         if user.is_authenticated():
-            basket = basket.objects.filter(user=user, checked_out=False)
+            order = order.objects.filter(user=user, checked_out=False)
         else:
-            basket = basket.objects.filter(session_id=session.session_key, checked_out=False)
-        basket = basket.first()
+            order = order.objects.filter(session_id=session.session_key, checked_out=False)
+        order = order.first()
 
-        if basket:
-            self.basket = basket
+        if order:
+            self.order = order
         else:
-            self.basket = self._create(session, user)
+            self.order = self._create(session, user)
 
     def __iter__(self):
-        for item in self.basket.item_set.all():
+        for item in self.order.item_set.all():
             yield item
 
     def _create(self, session, user):
@@ -53,44 +53,53 @@ class ShopBasketContainer(object):
             data.update({'user': user})
 
         data.update({'session_id': session.session_key})
-        basket = self.BASKET_MODEL(**data)
-        basket.save()
-        return basket
+        order = self.ORDER_MODEL(**data)
+        order.save()
+        return order
 
     @staticmethod
     def get_image(product):
         return product.main_image()
 
     def add_item(self, product, quantity=1):
-        item = self.BASKET_ITEM_MODEL.objects.filter(basket=self.basket,
+        item = self.ORDER_ITEM_MODEL.objects.filter(order=self.order,
                                                      product=product).first()
         if item:
             item.quantity += int(quantity)
         else:
-            item = self.BASKET_ITEM_MODEL(basket=self.basket,
+            item = self.ORDER_ITEM_MODEL(order=self.order,
                                           product=product,
                                           quantity=quantity)
         item.save()
 
     def remove(self, product):
-        item = self.BASKET_ITEM_MODEL.objects.filter(basket=self.basket, product=product).first()
+        item = self.ORDER_ITEM_MODEL.objects.filter(order=self.order, product=product).first()
         if item:
             item.delete()
         else:
             raise ItemDoesNotExist
 
     def update(self, product, quantity=1):
-        item = self.BASKET_ITEM_MODEL.objects.filter(basket=self.basket, product=product).first()
+        item = self.ORDER_ITEM_MODEL.objects.filter(order=self.order, product=product).first()
         if not item:
-            item = self.BASKET_ITEM_MODEL(basket=self.basket,
+            item = self.ORDER_ITEM_MODEL(order=self.order,
                                           product=product,
                                           quantity=quantity)
         item.quantity = quantity
         item.save()
 
+    def update_fields(self, **fields):
+        for k, v in fields.items():
+            setattr(self.order, k, v)
+        self.order.save()
+
+    def update_items(self, pitems):
+        for k, v in pitems.items():
+            self.update(k, v)
+
     def calculate(self):
         total_price = 0
-        for item in self.basket.item_set.all():
+        for item in self.order.item_set.all():
             item.unit_price = item.product.price
             item.item_price = item.unit_price * item.quantity
             item.save()
@@ -98,7 +107,7 @@ class ShopBasketContainer(object):
         self.price = total_price
 
     def clear(self):
-        for item in self.basket.item_set.all():
+        for item in self.order.item_set.all():
             item.delete()
 
     def get_quantity(self, product):
@@ -111,24 +120,24 @@ class ShopBasketContainer(object):
             raise ItemDoesNotExist
 
     def checkout(self):
-        self.basket.checked_out = True
-        self.basket.save()
+        self.order.checked_out = True
+        self.order.save()
         return True
 
     def total(self):
         total = 0
-        for item in self.basket.item.all():
+        for item in self.order.item.all():
             total += item.total()
         return total
 
     def count(self):
         total = 0
-        for item in self.basket.item.all():
+        for item in self.order.item.all():
             total += item.quantity
         return total
 
     def item_s(self):
-        return self.basket.item.all()
+        return self.order.item.all()
 
     def has_items(self):
         return self.item_count() > 0
