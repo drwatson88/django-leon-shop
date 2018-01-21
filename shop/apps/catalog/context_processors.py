@@ -272,3 +272,42 @@ class ShopCatalogBreadcrumbContextProcessor(BaseContextProcessor):
         self._create_data()
         self._aggregate()
         return self.output_context
+
+
+class ShopCatalogSidebarMenuContextProcessor(BaseContextProcessor):
+
+    """
+    Class for sidebar context processor menu
+    """
+
+    CATEGORY_MODEL = None
+
+    def _init(self, request):
+        super(ShopCatalogSidebarMenuContextProcessor, self)._init(request)
+        self.request = request
+
+    def _parse_url(self):
+        ptn = re.compile(r'/category/(?P<object_slug>.+)//?')
+        match = ptn.match(self.request.path)
+        gd = match.groupdict() if match else {}
+        self.object_slug = gd.get('object_slug', '')
+
+    def _set_category(self):
+        category = self.CATEGORY_MODEL.objects.get(slug_title=self.object_slug)
+        self.sidebar_category_s = category.get_chldren()
+
+    def _popup(self):
+        return 'popup' in self.request.path
+
+    def __call__(self, request):
+        self.header = {}
+        self.output_context = {
+            'sidebar_category_s': None
+        }
+        self._init(request)
+        if self._popup():
+            return {}
+        self._parse_url()
+        self._set_category()
+        self._aggregate()
+        return self.output_context

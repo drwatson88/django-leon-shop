@@ -76,6 +76,7 @@ class ShopCategorySite(MP_Node):
     show = models.BooleanField(verbose_name='Показывать', default=True)
     image = models.ImageField(verbose_name='Изображение', blank=True, null=True)
     position = models.IntegerField(verbose_name='Позиция', blank=True, null=True)
+    category_xml_cache = models.CharField(verbose_name='Кэш зависимых категорий поставщиков', max_length=10000)
 
     def get_absolute_url(self):
         pass

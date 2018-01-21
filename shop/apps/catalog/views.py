@@ -118,6 +118,12 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
             self.category_xml_s.extend(cat.category_xml_s.all().
                                        values_list('id', flat=True))
 
+    def _category_s_cache(self):
+        self.current_category = self.CATEGORY_SITE_MODEL.objects.filter(
+            slug_title=self.params_storage['catalog_slug_title']).first()
+        self.parent_category = self.current_category.get_parent()
+        self.category_xml_s = json.loads(self.current_category.cat_xml_cache)
+
     def _product_s_query(self):
         self.product_set = self.PRODUCT_MODEL.objects.filter(category_xml__in=self.category_xml_s)
 
@@ -192,8 +198,93 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
     def get(self, *args, **kwargs):
         self._category_s_query()
+        # self._category_s_cache()
         self._product_s_query()
         self._product_filter_s()
+        self._set_order_s()
+        self._product_s_pagination()
+        self._set_view_template()
+        self._aggregate()
+        return self._render()
+
+
+class ShopProductSaleListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
+
+    """ Product Sale List View. Receives get params
+        and response neither arguments in get
+        request params.
+
+        GET Params:
+
+        1. AJAX - if ajax is True, we have response
+        html part, that insert in DOM structure in client
+        side. If we have True, we response all html
+        document with base template.
+        2. GRID - grid or list
+        3. GRID_CNT - count columns in grid
+        4. ORDER - sort order
+        5. PAGE_NO - page number
+        6. PAGE_SIZE - size of page (count = rows*columns)
+
+        ALL PARAMS put in params_storage after validate
+    """
+
+    PRODUCT_MODEL = None
+    BRAND_MODEL = None
+    BRAND_MAKER_MODEL = None
+    PRODUCT_PARAMS_KV_MODEL = None
+    ORDER_REFERENCE_MODEL = None
+    FILTER_MODEL = None
+
+    page_size = PAGE_SIZE
+    context_processors = []
+    template_popup_change = {}
+
+    kwargs_params_slots = {
+    }
+
+    request_params_slots = {
+        'order': [None, 'default'],
+        'page': [None, 1],
+        'filter': [None, {}],
+        'count': [None, PAGE_COUNTER_S[0]],
+        'grid': [None, 0]
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.params_storage = {}
+        self.output_context = {
+            'page': None,
+        }
+        super(ShopProductSaleListView, self).__init__(*args, **kwargs)
+
+    def _product_s_query(self):
+        self.product_set = self.PRODUCT_MODEL.objects.filter(sale=True)
+
+    def _set_order_s(self):
+        order_param = self.params_storage['order'] or 'default'
+        order_selected = self.ORDER_REFERENCE_MODEL.objects.get(code=order_param)
+        order_name = order_selected.field_name \
+            if order_selected.field_order else '-{}'.format(order_selected.field_name)
+        self.product_set = self.product_set.order_by(order_name)
+
+    def _product_s_pagination(self):
+        count = self.params_storage['count']
+        count = count if count != 'ALL' else None
+
+        if count:
+            paginator = DiggPaginator(self.product_set, self.params_storage['count'])
+            self.page = paginator.page(self.params_storage['page'] or 1)
+        else:
+            self.page = {'object_list': self.product_set}
+
+    def _set_view_template(self):
+        if self.popup:
+            self.template_popup['grid'] = self.template_popup_change.get(
+                'list' if self.params_storage['grid'] else 'grid')
+
+    def get(self, *args, **kwargs):
+        self._product_s_query()
         self._set_order_s()
         self._product_s_pagination()
         self._set_view_template()
