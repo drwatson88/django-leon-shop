@@ -18,6 +18,10 @@ class OrderParamsValidatorMixin(BaseParamsValidatorMixin):
         except BaseException as exc:
             return default
 
+    @staticmethod
+    def _city_id_validator(value, default):
+        return value
+
 
 class OrderBaseWizardView(NamedUrlSessionWizardView, BaseView):
 

@@ -85,7 +85,7 @@ class ShopOrderWizardView(OrderBaseWizardView):
         pass
 
 
-class ShopOrderUserCityView(OrderBaseView):
+class ShopOrderUserCityView(OrderBaseView, OrderParamsValidatorMixin):
 
     """ Product User City View.
     """
@@ -104,8 +104,7 @@ class ShopOrderUserCityView(OrderBaseView):
         super(ShopOrderUserCityView, self).__init__(*args, **kwargs)
 
     def _session_init(self):
-        session_key = self.request.session
-        self.session_store = SessionStore(session_key=session_key)
+        self.session_store = self.request.session
 
     def _city_init(self):
         city_id = self.params_storage['city_id']
