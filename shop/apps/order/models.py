@@ -25,10 +25,15 @@ class ShopDeliveryCity(BaseUidMixin, BaseStatusMixin):
     address = models.CharField(verbose_name='Адрес', max_length=250, null=True, blank=True)
     is_main = models.BooleanField(verbose_name='В списке главных', default=False)
 
+    region = models.CharField(verbose_name='Регион', max_length=50)
+    area = models.CharField(verbose_name='Область', max_length=50)
+    city = models.CharField(verbose_name='Город', max_length=50)
+    settlement = models.CharField(verbose_name='Поселок/деревня', max_length=50)
+
     class Meta:
         abstract = True
         verbose_name = u'Город'
-        verbose_name_plural = u'города'
+        verbose_name_plural = u'Города'
 
 
 class ShopDeliveryService(BaseStatusMixin):
