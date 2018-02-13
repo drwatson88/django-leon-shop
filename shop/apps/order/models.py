@@ -17,7 +17,7 @@ class ShopDeliveryCompany(BaseUidMixin, BaseStatusMixin, BasePositionMixin):
         verbose_name_plural = u'Компании доставки'
 
 
-class ShopDeliveryCity(BaseUidMixin, BaseStatusMixin):
+class ShopDeliveryCity(BaseUidMixin, BaseStatusMixin, BasePositionMixin):
 
     name = models.CharField(verbose_name='Название города', max_length=250)
     kladr = models.CharField(verbose_name='ФИАС', max_length=15, null=True, blank=True)
