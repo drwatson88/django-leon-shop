@@ -23,6 +23,7 @@ class ShopDeliveryCity(BaseUidMixin, BaseStatusMixin, BasePositionMixin):
     kladr = models.CharField(verbose_name='ФИАС', max_length=15, null=True, blank=True)
     fias = models.CharField(verbose_name='ФИАС', max_length=15, null=True, blank=True)
     address = models.CharField(verbose_name='Адрес', max_length=250, null=True, blank=True)
+    index = models.CharField(verbose_name='Индекс', max_length=50, null=True, blank=True)
     is_main = models.BooleanField(verbose_name='В списке главных', default=False)
 
     region = models.CharField(verbose_name='Регион', max_length=50)
@@ -63,24 +64,26 @@ class ShopOrder(models.Model):
 
     creation_date = models.DateTimeField(verbose_name='creation date', default=datetime.now)
     checked_out = models.BooleanField(default=False, verbose_name=u'checked out')
-    name = models.CharField(verbose_name='Имя', max_length=50)
+    name = models.CharField(verbose_name='Имя', max_length=50, null=True, blank=True)
 
-    email = models.EmailField(verbose_name='Почта', max_length=50)
-    phone = models.CharField(verbose_name='Телефон', max_length=30)
-    comment = models.CharField(verbose_name='Комментарии', max_length=30)
+    email = models.EmailField(verbose_name='Почта', max_length=50, null=True, blank=True)
+    phone = models.CharField(verbose_name='Телефон', max_length=30, null=True, blank=True)
+    comment = models.CharField(verbose_name='Комментарии', max_length=30, null=True, blank=True)
 
-    region = models.CharField(verbose_name='Регион', max_length=50)
-    area = models.CharField(verbose_name='Область', max_length=50)
-    city = models.CharField(verbose_name='Город', max_length=50)
-    settlement = models.CharField(verbose_name='Поселок/деревня', max_length=50)
-    street = models.CharField(verbose_name='Улица', max_length=50)
-    house = models.CharField(verbose_name='Дом', max_length=10)
-    flat = models.CharField(verbose_name='Квартира', max_length=10)
+    is_prepaid = models.NullBooleanField(verbose_name='Предоплата', max_length=30, default=True, blank=True)
+
+    region = models.CharField(verbose_name='Регион', max_length=50, null=True, blank=True)
+    area = models.CharField(verbose_name='Область', max_length=50, null=True, blank=True)
+    city = models.CharField(verbose_name='Город', max_length=50, null=True, blank=True)
+    settlement = models.CharField(verbose_name='Поселок/деревня', max_length=50, null=True, blank=True)
+    street = models.CharField(verbose_name='Улица', max_length=50, null=True, blank=True)
+    house = models.CharField(verbose_name='Дом', max_length=10, null=True, blank=True)
+    flat = models.CharField(verbose_name='Квартира', max_length=10, null=True, blank=True)
 
     class Meta:
         abstract = True
-        verbose_name = u'Заказ'
-        verbose_name_plural = u'Заказы'
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
 
 
 class ShopOrderItem(models.Model):

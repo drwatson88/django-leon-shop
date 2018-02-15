@@ -58,19 +58,19 @@ class ShopOrderWizardView(OrderBaseWizardView):
     ]
 
     def context_service_init(self):
-        pass
+        return super(ShopOrderWizardView, self).context_service_init()
 
     def initial_contact_init(self):
-        pass
+        return super(ShopOrderWizardView, self).initial_contact_init()
 
     def context_payment_init(self):
-        pass
+        return super(ShopOrderWizardView, self).context_payment_init()
 
     def context_confirm_init(self):
-        pass
+        return super(ShopOrderWizardView, self).context_confirm_init()
 
     def get_form_initial(self, step):
-        pass
+        return super(ShopOrderWizardView, self).get_form_initial(step)
 
     def get_context_data(self, form, **kwargs):
         return super(ShopOrderWizardView, self).get_context_data(form=form, **kwargs)
