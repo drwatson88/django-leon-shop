@@ -70,13 +70,15 @@ class ShopBrandMaker(models.Model):
 class ShopCategorySite(MP_Node):
 
     title = models.CharField(verbose_name='Заголовок', max_length=255)
-    slug_title = models.SlugField(verbose_name='Имя для ссылки', unique=True, blank=True, null=True)
+    slug_title = models.SlugField(verbose_name='Имя для ссылки', unique=True, blank=True,
+                                  null=True, max_length=150)
     preview = models.TextField(verbose_name='Краткое описание', blank=True, null=True)
     content = models.TextField(verbose_name='Описание', blank=True, null=True)
     show = models.BooleanField(verbose_name='Показывать', default=True)
     image = models.ImageField(verbose_name='Изображение', blank=True, null=True)
     position = models.IntegerField(verbose_name='Позиция', blank=True, null=True)
-    category_xml_cache = models.CharField(verbose_name='Кэш зависимых категорий поставщиков', max_length=10000)
+    category_xml_cache = models.TextField(verbose_name='Кэш зависимых категорий поставщиков',
+                                          max_length=10000)
 
     def get_absolute_url(self):
         pass

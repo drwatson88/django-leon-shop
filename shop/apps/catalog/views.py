@@ -122,7 +122,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         self.current_category = self.CATEGORY_SITE_MODEL.objects.filter(
             slug_title=self.params_storage['catalog_slug_title']).first()
         self.parent_category = self.current_category.get_parent()
-        self.category_xml_s = json.loads(self.current_category.cat_xml_cache)
+        self.category_xml_s = json.loads(self.current_category.category_xml_cache)
 
     def _product_s_query(self):
         self.product_set = self.PRODUCT_MODEL.objects.filter(category_xml__in=self.category_xml_s)
@@ -197,8 +197,8 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
                 'list' if self.params_storage['grid'] else 'grid')
 
     def get(self, *args, **kwargs):
-        self._category_s_query()
-        # self._category_s_cache()
+        # self._category_s_query()
+        self._category_s_cache()
         self._product_s_query()
         self._product_filter_s()
         self._set_order_s()

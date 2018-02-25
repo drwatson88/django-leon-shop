@@ -103,9 +103,14 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
         :return: 
         """
         qdata = self.params_storage['filter']
-        self.filter_set = self.current_category.filter_s.all() or \
-                          self.parent_category.filter_s.all()
-        self.filter_set = self.filter_set
+
+        level = self.current_category.depth
+        current_category = self.current_category
+        for i in reversed(range(level)):
+            self.filter_set = current_category.filter_s.all()
+            if self.filter_set:
+                break
+            current_category = current_category.get_parent()
 
         for filter_obj in self.filter_set:
             filter_input = {'filter': filter_obj}
