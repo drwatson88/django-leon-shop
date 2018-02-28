@@ -285,7 +285,7 @@ class ShopCatalogSidebarMenuContextProcessor(BaseContextProcessor):
     Class for sidebar context processor menu
     """
 
-    CATEGORY_MODEL = None
+    CATEGORY_SITE_MODEL = None
 
     def _init(self, request):
         super(ShopCatalogSidebarMenuContextProcessor, self)._init(request)
@@ -298,8 +298,8 @@ class ShopCatalogSidebarMenuContextProcessor(BaseContextProcessor):
         self.object_slug = gd.get('object_slug', '')
 
     def _set_category(self):
-        category = self.CATEGORY_MODEL.objects.get(slug_title=self.object_slug)
-        self.sidebar_category_s = category.get_chldren()
+        category = self.CATEGORY_SITE_MODEL.objects.get(slug_title=self.object_slug)
+        self.sidebar_category_s = category.get_children()
 
     def _popup(self):
         return 'popup' in self.request.path
