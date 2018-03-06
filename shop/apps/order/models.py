@@ -26,10 +26,10 @@ class ShopDeliveryCity(BaseUidMixin, BaseStatusMixin, BasePositionMixin):
     index = models.CharField(verbose_name='Индекс', max_length=50, null=True, blank=True)
     is_main = models.BooleanField(verbose_name='В списке главных', default=False)
 
-    region = models.CharField(verbose_name='Регион', max_length=50)
-    area = models.CharField(verbose_name='Область', max_length=50)
-    city = models.CharField(verbose_name='Город', max_length=50)
-    settlement = models.CharField(verbose_name='Поселок/деревня', max_length=50)
+    region = models.CharField(verbose_name='Регион', max_length=50, null=True, blank=True)
+    area = models.CharField(verbose_name='Область', max_length=50, null=True, blank=True)
+    city = models.CharField(verbose_name='Город', max_length=50, null=True, blank=True)
+    settlement = models.CharField(verbose_name='Поселок/деревня', max_length=50, null=True, blank=True)
 
     class Meta:
         abstract = True
