@@ -8,7 +8,7 @@ import hashlib
 
 from django.db import models
 
-from leon.apps.base.models import BaseStatusMixin
+from leon.apps.base.models import BaseStatusMixin, BaseShowMixin
 
 
 class ShopMaker(models.Model):
@@ -132,7 +132,7 @@ class ShopCategoryXML(MP_Node, BaseStatusMixin):
         return u'{}{} ({})'.format((self.depth - 1) * u'---', self.title, self.maker)
 
 
-class ShopProduct(BaseStatusMixin):
+class ShopProduct(BaseStatusMixin, BaseShowMixin):
     """
     Additions:
         maker = models.ForeignKey(Maker, verbose_name='Поставщик')
