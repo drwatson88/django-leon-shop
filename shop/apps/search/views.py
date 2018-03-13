@@ -2,14 +2,13 @@
 
 import json
 from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
-
+from django.db.models.query_utils import Q
 from .base import SearchBaseView, SearchParamsValidatorMixin
 
 
+class ShopSearchLookupView(SearchBaseView, SearchParamsValidatorMixin):
 
-class ShopSearchView(SearchBaseView, SearchParamsValidatorMixin):
-
-    """ Basket List View. Receives get params
+    """ Search View. Receives get params
         and response neither arguments in get
         request params.
 
@@ -21,65 +20,69 @@ class ShopSearchView(SearchBaseView, SearchParamsValidatorMixin):
         document with base template.
         2. ITEM_S - list of dicts of items with params
         (
-            id: id of product/subproduct,
-            count: count of product,
-            print_type_id: id of print_type
+            id: id of product/subproduct
         )
 
         ALL PARAMS put in params_storage after validate
     """
 
-    BASKET_MODEL = None
+    STRING_LIMIT = 100
+    LOOKUP_LIMIT = 10
+    PRODUCT_MODEL = None
 
     request_params_slots = {
-        'item_s': [None, []],
-    }
-
-    session_params_slots = {
-        'basket': [None, None],
-    }
-
-    session_save_slots = {
-        'basket': 'basket_id'
+        'query': [None, ''],
     }
 
     def __init__(self, *args, **kwargs):
         self.params_storage = {}
         self.output_context = {
-            'item_s': None,
-            'total_price': None
+            'lookup_obj_s': None
         }
-        super(ShopBasketCalcView, self).__init__(*args, **kwargs)
+        super(ShopSearchView, self).__init__(*args, **kwargs)
 
-    def _set_item_s(self):
-        self.item_s = self.params_storage['item_s']
+    def _set_query(self):
+        self._query = self.params_storage['query']
 
-    def _set_basket(self):
-        self.basket = self.BASKET_MODEL(self.params_storage['basket'])
+    def _set_item_set(self):
+        self.item_set = self.PRODUCT_MODEL.objects.filter(
+            Q(title__icontains=self._query) | Q(code__icontains=self._query)
+        ).all().order_by('title')[:self.LOOKUP_LIMIT]
 
-    def _basket_update_all(self):
-
-        item_pk_s = {}
-        for item in self.cart:
-            item_pk_s[item.product.pk] = item.product
-
-        for item in self.item_s:
-            product_obj = self.PRODUCT_MODEL.get_object_(id=item['pk'])
-            self.cart.update(product_obj, item['stock'])
-            if item['pk'] in item_pk_s:
-                del item_pk_s[item['pk']]
-
-        for item_pk, product in item_pk_s.items():
-            self.cart.remove(product)
-
-        self.cart.calculate()
-        self.total_price = str(abs(self.cart.price))
+    def _set_lookup(self):
+        self.lookup_obj_s = \
+            [{'pk': p.pk, 'name': '{} - {}'.format(p.code, p.title)[:self.STRING_LIMIT]} for p in self.item_set]
 
     def get(self, *args, **kwargs):
-        self._set_item_s()
-        self._set_cart()
-        self._cart_update_all()
-        self._save_cookies()
+        self._set_query()
+        self._set_item_set()
+        self._set_lookup()
         self._aggregate()
-
         return HttpResponse(json.dumps(self.output_context))
+
+
+class ShopSearchListView(SearchBaseView, SearchParamsValidatorMixin):
+
+    PRODUCT_MODEL = None
+    
+    def __init__(self, *args, **kwargs):
+        self.params_storage = {}
+        self.output_context = {
+            'search_set': None
+        }
+        super(ShopSearchView, self).__init__(*args, **kwargs)
+
+    def _set_query(self):
+        self._query = self.params_storage['query']
+
+    def _set_item_set(self):
+        self.search_set = self.PRODUCT_MODEL.objects.filter(
+            Q(title__icontains=self._query) | Q(code__icontains=self._query)
+        ).all().order_by('title')[:self.LOOKUP_LIMIT]
+
+    def get(self, *args, **kwargs):
+        self._set_query()
+        self._set_item_set()
+        self._aggregate()
+        return self._render()
+
