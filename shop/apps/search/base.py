@@ -14,6 +14,13 @@ class SearchParamsValidatorMixin(BaseParamsValidatorMixin):
     def _query_validator(value, default):
         return value or default
 
+    @staticmethod
+    def _page_validator(value, default):
+        if value:
+            return value
+        else:
+            return default
+
 
 class SearchBaseView(BaseView):
 
