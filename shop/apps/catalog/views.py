@@ -104,6 +104,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         self.output_context = {
             'current_category': None,
             'page': None,
+            'canonical': None
         }
         super(ShopProductListView, self).__init__(*args, **kwargs)
 
@@ -196,6 +197,9 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
             self.template_popup['grid'] = self.template_popup_change.get(
                 'list' if self.params_storage['grid'] else 'grid')
 
+    def _set_canonical(self):
+        self.canonical = self.current_category.get_absolute_url()
+
     def get(self, *args, **kwargs):
         # self._category_s_query()
         self._category_s_cache()
@@ -204,6 +208,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         self._set_order_s()
         self._product_s_pagination()
         self._set_view_template()
+        self._set_canonical()
         self._aggregate()
         return self._render()
 

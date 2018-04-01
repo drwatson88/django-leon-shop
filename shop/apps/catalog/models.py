@@ -299,7 +299,7 @@ class ShopProductAttachment(models.Model):
         super(ShopProductAttachment, self).save()
 
     def __str__(self):
-        return self.desc
+        return self.src
 
     class Meta:
         abstract = True
