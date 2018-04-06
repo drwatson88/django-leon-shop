@@ -4,7 +4,7 @@
 import json
 from digg_paginator import DiggPaginator
 from django.shortcuts import get_object_or_404, HttpResponse
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 
 from .base import ShopCatalogBaseView, ShopCatalogParamsValidatorMixin
 
@@ -111,6 +111,8 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
     def _category_s_query(self):
         self.current_category = self.CATEGORY_SITE_MODEL.objects.filter(
             slug_title=self.params_storage['catalog_slug_title']).first()
+        if not self.current_category:
+            raise Http404
         self.parent_category = self.current_category.get_parent()
 
         self.category_xml_s = list(self.current_category.category_xml_s.all().
@@ -122,6 +124,8 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
     def _category_s_cache(self):
         self.current_category = self.CATEGORY_SITE_MODEL.objects.filter(
             slug_title=self.params_storage['catalog_slug_title']).first()
+        if not self.current_category:
+            raise Http404
         self.parent_category = self.current_category.get_parent()
         self.category_xml_s = json.loads(self.current_category.category_xml_cache)
 
