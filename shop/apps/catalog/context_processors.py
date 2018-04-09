@@ -94,6 +94,12 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
             self.category_xml_s.extend(cat.category_xml_s.all().
                                        values_list('id', flat=True))
 
+    def _category_s_cache(self):
+        self.current_category = self.CATEGORY_SITE_MODEL.objects.filter(
+            slug_title=self.params_storage['catalog_slug_title']).first()
+        self.parent_category = self.current_category.get_parent()
+        self.category_xml_s = json.loads(self.current_category.category_xml_cache)
+
     def _product_query(self):
         self.product_set = self.PRODUCT_MODEL.objects.filter(category_xml__in=self.category_xml_s)
 
@@ -118,6 +124,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
             if filter_obj.type == 'FIELD':
                 q = filter_obj.query_method
                 f = filter_obj.field_name
+                u = filter_obj.unit
                 if q:
                     filter_input = getattr(self, q)()
                 else:
@@ -127,6 +134,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
                                               ['{}__min'.format(f)] or 5) - 2)
                     filter_input['from'] = params.get('from') or (filter_input['min'] + 1)
                     filter_input['to'] = params.get('to') or (filter_input['max'] - 1)
+                    filter_input['unit'] = u
             if filter_obj.type in ['M2M', 'FK']:
                 selected = str(params['selected']).split(',') if params.get('selected') else []
                 q = filter_obj.query_method
@@ -176,7 +184,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
             'counter': None
         }
         self._init(request)
-        self._category_query()
+        self._category_s_cache()
         self._product_query()
         self._filter_query_s()
         self._order_query_s()

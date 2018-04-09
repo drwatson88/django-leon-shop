@@ -324,13 +324,13 @@ class ShopFilter(models.Model):
     )
 
     title = models.CharField(verbose_name='Название фильтра', max_length=255)
-    code = models.CharField(verbose_name='Наименование фильтра', max_length=255)
+    code = models.CharField(verbose_name='Code фильтра', max_length=255)
     type = models.CharField(verbose_name='Значение поля фильтра', choices=TYPE_CHOICES, max_length=50)
     kv_key = models.CharField(verbose_name='Ключ фильтра', max_length=50, null=True, blank=True)
     field_name = models.CharField(verbose_name='Название поля', max_length=50, null=True, blank=True)
     unit = models.CharField(verbose_name='Единица измерения', max_length=10, null=True, blank=True)
     query_method = models.CharField(verbose_name='Метод фильтра', max_length=50, null=True, blank=True)
-    template = models.CharField(verbose_name='Шаблон реализации', max_length=50, null=False, blank=False)
+    template = models.CharField(verbose_name='Шаблон реализации', max_length=50, null=True, blank=True)
     position = models.IntegerField(verbose_name='Позиция в списке')
 
     def __str__(self):
