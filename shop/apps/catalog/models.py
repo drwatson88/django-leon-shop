@@ -260,7 +260,7 @@ class ShopProductParamsKV(models.Model):
     code = models.CharField(verbose_name='Код поля', max_length=255)
     title = models.CharField(verbose_name='Имя поля', max_length=255)
     value = models.CharField(verbose_name='Значение поля', max_length=4000)
-    value_hash = models.IntegerField(verbose_name='Хэш значение поля')
+    value_hash = models.IntegerField(verbose_name='Хэш значение поля', null=True)
     position = models.IntegerField(verbose_name='Порядок', null=True)
 
     class Meta:
