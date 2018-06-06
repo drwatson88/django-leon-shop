@@ -1,2 +1,20 @@
-venv3/
+
+# virtualenv
+venv3
+venv
+
+# Python interpreter files
 *.py[co]
+
+# Documentation build
+docs/build
+
+# IDE
+.idea
+
+# dev
+tmp
+dist
+build
+
+
