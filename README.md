@@ -7,13 +7,13 @@ This library created from me for using in bulding some e-commerce sites with Dja
 ~~~
 Creating Model for Catalog:
 
-from shop.apps.catalog.models import ShopProduct
+from shop_base.catalog.models import ShopProduct
 class Product(ShopProduct):
     pass
 
 Creating ContextProcessor for Catalog Product List:
 
-from shop.apps.catalog.context_processors import ShopCatalogFilterContextProcessor 
+from shop_base.catalog.context_processors import ShopCatalogFilterContextProcessor 
 class CatalogFilterContextProcessor(ShopCatalogFilterContextProcessor):
     CATEGORY_SITE_MODEL = CategorySite
     PRODUCT_MODEL = Product
@@ -21,7 +21,7 @@ class CatalogFilterContextProcessor(ShopCatalogFilterContextProcessor):
     
 Creating View for Catalog Product List:
 
-from shop.apps.catalog.views import ShopProductListView
+from shop_base.catalog.views import ShopProductListView
 class ProductListView(ShopProductListView):
     context_processors = [CatalogFilterContextProcessor, CatalogBreadcrumbContextProcessor,
                           CatalogSidebarMenuContextProcessor]
@@ -66,4 +66,4 @@ make html
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
