@@ -38,8 +38,8 @@ class ProductListView(ShopProductListView):
 
 ### Prerequisites
 
-Python >= 3.5
-Django >= 1.11
+* Python >= 3.5
+* Django >= 1.11
 
 
 ### Installing
