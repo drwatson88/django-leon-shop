@@ -13,7 +13,7 @@
 import json
 import re
 from django.db.models import Max, Min
-from leon_base.base import BaseContextProcessor
+from leon_base.base.context_processors import BaseContextProcessor
 from .base import ShopCatalogParamsValidatorMixin
 
 

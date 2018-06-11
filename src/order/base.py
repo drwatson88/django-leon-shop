@@ -2,7 +2,7 @@
 
 
 from formtools.wizard.views import NamedUrlSessionWizardView
-from leon_base.base import BaseView, BaseParamsValidatorMixin
+from leon_base.base.views import BaseView, BaseParamsValidatorMixin
 
 
 class OrderParamsValidatorMixin(BaseParamsValidatorMixin):
