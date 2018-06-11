@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import json
-from leon.apps.base import BaseView, BaseParamsValidatorMixin
+from leon_base.base import BaseView, BaseParamsValidatorMixin
 
 
 class BasketParamsValidatorMixin(BaseParamsValidatorMixin):

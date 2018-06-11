@@ -8,7 +8,7 @@ import hashlib
 
 from django.db import models
 
-from leon.apps.base.models import BaseStatusMixin, BaseShowMixin
+from leon_base.base.models import BaseStatusMixin, BaseShowMixin
 
 
 class ShopMaker(models.Model):

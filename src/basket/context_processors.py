@@ -1,7 +1,7 @@
 # coding: utf-8
 
 
-from leon.apps.base import BaseContextProcessor
+from leon_base.base import BaseContextProcessor
 from .base import BasketParamsValidatorMixin
 
 

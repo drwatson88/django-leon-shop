@@ -3,7 +3,7 @@
 
 from datetime import datetime
 from django.db import models
-from leon.apps.base.models import BaseUidMixin, BaseStatusMixin, BasePositionMixin
+from leon_base.base.models import BaseUidMixin, BaseStatusMixin, BasePositionMixin
 
 
 class ShopDeliveryCompany(BaseUidMixin, BaseStatusMixin, BasePositionMixin):

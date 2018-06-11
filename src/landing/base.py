@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from leon.apps.base import BaseView, BaseParamsValidatorMixin
+from leon_base.base import BaseView, BaseParamsValidatorMixin
 
 
 class LandingParamsValidatorMixin(BaseParamsValidatorMixin):
