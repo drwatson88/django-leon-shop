@@ -3,7 +3,7 @@
 
 import json
 from digg_paginator import DiggPaginator
-from django.shortcuts import get_object_or_404, HttpResponse
+from django.shortcuts import get_object_or_404, HttpResponse, redirect
 from django.http import JsonResponse, Http404
 
 from .base import ShopCatalogBaseView, ShopCatalogParamsValidatorMixin
@@ -192,7 +192,10 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
 
         if count:
             paginator = DiggPaginator(self.product_set, self.params_storage['count'])
-            self.page = paginator.page(self.params_storage['page'] or 1)
+            page = int(self.params_storage['page'] or 1)
+            if paginator.num_pages < page:
+                raise Http404
+            self.page = paginator.page(page)
         else:
             self.page = {'object_list': self.product_set}
 
