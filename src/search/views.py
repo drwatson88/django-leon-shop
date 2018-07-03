@@ -4,6 +4,7 @@
 import json
 from django.shortcuts import render_to_response, get_object_or_404, HttpResponse
 from django.db.models.query_utils import Q
+from django.contrib.postgres.search import TrigramSimilarity
 from digg_paginator import DiggPaginator
 from .base import SearchBaseView, SearchParamsValidatorMixin
 
@@ -47,13 +48,12 @@ class ShopSearchLookupView(SearchBaseView, SearchParamsValidatorMixin):
         self._query = self.params_storage['query']
 
     def _set_item_set(self):
-        self.item_set = self.PRODUCT_MODEL.objects.filter(
-            Q(title__icontains=self._query) | Q(code__icontains=self._query)
-        ).all().order_by('title')[:self.LOOKUP_LIMIT]
+        self.item_set = self.PRODUCT_MODEL.objects.annotate(similarity=TrigramSimilarity('title', self._query)).\
+            filter(similarity__gt=0.1).order_by('-similarity')[:self.LOOKUP_LIMIT]
 
     def _set_lookup(self):
         self.lookup_obj_s = \
-            [{'pk': p.pk, 'name': '{} - {}'.format(p.code, p.title)[:self.STRING_LIMIT]} for p in self.item_set]
+            [{'pk': p.pk, 'name': '{}'.format(p.title)[:self.STRING_LIMIT]} for p in self.item_set]
 
     def get(self, *args, **kwargs):
         self._set_query()
