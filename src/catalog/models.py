@@ -253,14 +253,14 @@ class ShopProductParamsKV(models.Model):
     """
     Additions:
         product = models.ForeignKey(Product, verbose_name='Товар', related_name='params_kv')
-        
+
         unique_together = ('product', 'abbr')
     """
 
     code = models.CharField(verbose_name='Код поля', max_length=255)
     title = models.CharField(verbose_name='Имя поля', max_length=255)
     value = models.CharField(verbose_name='Значение поля', max_length=4000)
-    value_hash = models.IntegerField(verbose_name='Хэш значение поля', null=True)
+    value_hash = models.CharField(verbose_name='Хэш значение поля', null=True)
     position = models.IntegerField(verbose_name='Порядок', null=True)
 
     class Meta:
@@ -335,6 +335,24 @@ class ShopFilter(models.Model):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        abstract = True
+        verbose_name = 'Фильтр'
+        verbose_name_plural = 'Фильтры'
+
+
+class ShopFilterParamsKVGroup(models.Model):
+    """
+    Additions:
+        category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
+                                              blank=True, null=True, related_name='category_xml_s')
+
+    """
+
+    code = models.CharField(verbose_name='Код поля', max_length=255)
+    value_hash = models.TextField(verbose_name='Кэш зависимых категорий поставщиков',
+                                  max_length=10000)
 
     class Meta:
         abstract = True
