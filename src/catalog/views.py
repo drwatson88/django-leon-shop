@@ -141,9 +141,13 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         if not qdata:
             return
 
-        self.filter_set = self.current_category.filter_s.all() or \
-                          (self.parent_category and self.parent_category.filter_s.all())
-        self.filter_set = self.filter_set.order_by('position')
+        level = self.current_category.depth
+        current_category = self.current_category
+        for i in reversed(range(level)):
+            self.filter_set = current_category.filter_s.exclude(type=['KV']).all()
+            if self.filter_set:
+                break
+            current_category = current_category.get_parent()
 
         for filter_obj in self.filter_set:
             params = qdata.get(filter_obj.type).get(filter_obj.code) if qdata.get(filter_obj.type) else {}
@@ -170,14 +174,11 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
                     self.product_set = self.product_set.\
                         filter(**{'{0}__{0}__pk__in'.format(filter_obj.code): [int(i) for i in selected]})
 
-            if filter_obj.type == 'KV':
-                selected = str(params['selected']).split(',') if params.get('selected') else []
-                q = filter_obj.query_method
-                kv_key = filter_obj.kv_key
-                if q:
-                    self.product_set = getattr(self, q)(selected=selected, kv_key=kv_key)
-                elif selected:
-                    self.product_set = self.product_set.filter(**{'params_kv__value_hash__in': selected})
+        self.filter_set = self.current_category.filter_s.filter(type=['KV']).all()
+        for filter_obj in self.filter_set:
+            params = qdata.get(filter_obj.type, {}).get(filter_obj.code, {})
+            selected = str(params['selected']).split(',') if params.get('selected') else []
+            self.product_set = self.product_set.filter(**{'params_kv__value_hash__in': selected})
 
     def _set_order_s(self):
         order_param = self.params_storage['order'] or 'default'
