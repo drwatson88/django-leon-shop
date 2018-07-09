@@ -99,6 +99,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
 
     CATEGORY_SITE_MODEL = None
     PRODUCT_MODEL = None
+    FILTER_PARAMSKV_GROUP_MODEL = None
     PRODUCT_PARAMS_KV_MODEL = None
     ORDER_REFERENCE_MODEL = None
 
@@ -130,10 +131,11 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
         """
         qdata = self.params_storage['filter']
 
+        self.filter_s = []
         level = self.current_category.depth
         current_category = self.current_category
         for i in reversed(range(level)):
-            self.filter_set = current_category.filter_s.all()
+            self.filter_set = current_category.filter_s.exclude(type=['KV']).all()
             if self.filter_set:
                 break
             current_category = current_category.get_parent()
@@ -168,19 +170,16 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
                     filter_input['item_s'] = [{'pk': k, 'title': v} for k, v in obj_s]
                     filter_input['selected'] = [int(i) for i in selected] if selected \
                         else [item['pk'] for item in filter_input['item_s']]
-            if filter_obj.type == 'KV':
-                kv_key = filter_obj.kv_key
-                selected = str(params['selected']).split(',') if params.get('selected') else []
+            self.filter_s.append(filter_input)
 
-                q = filter_obj.query_method
-                if q:
-                    filter_input = getattr(self, q)(selected=selected, kv_key=kv_key)
-                else:
-                    obj_s = set(self.product_set.filter(params_kv__code=kv_key).
-                                values_list('params_kv__value_hash', 'params_kv__value'))
-                    obj_s.remove((None, None)) if (None, None) in obj_s else None
-                    filter_input['item_s'] = [{'pk': k, 'title': v} for k, v in obj_s]
-                    filter_input['selected'] = selected
+        self.filter_set = self.current_category.filter_s.filter(type=['KV']).all()
+        for filter_obj in self.filter_set:
+            filter_input = {'filter': filter_obj}
+            params = qdata.get(filter_obj.type, {}).get(filter_obj.code, {})
+            selected = str(params['selected']).split(',') if params.get('selected') else []
+            obj_s = zip(filter_obj.filter_paramskv_group.value_hash, filter_obj.filter_paramskv_group.value)
+            filter_input['item_s'] = [{'pk': k, 'title': v} for k, v in obj_s]
+            filter_input['selected'] = selected
             self.filter_s.append(filter_input)
 
     def _order_query_s(self):

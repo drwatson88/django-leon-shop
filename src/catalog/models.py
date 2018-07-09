@@ -313,6 +313,9 @@ class ShopFilter(models.Model):
         category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
                                           blank=True, null=True, related_name='category_xml_s')
 
+        filter_paramskv_group = models.OneToOneField(Filter, verbose_name='Объект фильтр',
+                                                     related_name='cat_filter', blank=True, null=True)
+
         unique_together = ('category_site', 'type', 'code')
     """
 
@@ -325,8 +328,8 @@ class ShopFilter(models.Model):
 
     title = models.CharField(verbose_name='Название фильтра', max_length=255)
     code = models.CharField(verbose_name='Code фильтра', max_length=255)
-    type = models.CharField(verbose_name='Значение поля фильтра', choices=TYPE_CHOICES, max_length=50)
-    kv_key = models.CharField(verbose_name='Ключ фильтра', max_length=50, null=True, blank=True)
+    type = models.CharField(verbose_name='Тип фильтра', choices=TYPE_CHOICES, max_length=50)
+    # kv_key = models.CharField(verbose_name='Ключ фильтра', max_length=50, null=True, blank=True)
     field_name = models.CharField(verbose_name='Название поля', max_length=50, null=True, blank=True)
     unit = models.CharField(verbose_name='Единица измерения', max_length=10, null=True, blank=True)
     query_method = models.CharField(verbose_name='Метод фильтра', max_length=50, null=True, blank=True)
@@ -345,14 +348,14 @@ class ShopFilter(models.Model):
 class ShopFilterParamsKVGroup(models.Model):
     """
     Additions:
-        category_site = models.ForeignKey(CategorySite, verbose_name='Категория на сайте',
-                                              blank=True, null=True, related_name='category_xml_s')
 
     """
 
     code = models.CharField(verbose_name='Код поля', max_length=255)
-    value_hash = models.TextField(verbose_name='Кэш зависимых категорий поставщиков',
+    value_hash = models.TextField(verbose_name='Список ХЭШ значений по фильтрации',
                                   max_length=10000)
+    value_s = models.TextField(verbose_name='Список значений по фильтрации',
+                               max_length=10000)
 
     class Meta:
         abstract = True
