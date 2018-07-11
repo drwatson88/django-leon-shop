@@ -351,7 +351,6 @@ class ShopFilterParamsKVGroup(models.Model):
 
     """
 
-    code = models.CharField(verbose_name='Код поля', max_length=255)
     value_hash = models.TextField(verbose_name='Список ХЭШ значений по фильтрации',
                                   max_length=10000)
     value_s = models.TextField(verbose_name='Список значений по фильтрации',

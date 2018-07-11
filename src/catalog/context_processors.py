@@ -172,16 +172,16 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
                         else [item['pk'] for item in filter_input['item_s']]
             self.filter_s.append(filter_input)
 
-        self.filter_set = self.current_category.filter_s.filter(type=['KV']).all()
+        self.filter_set = self.current_category.filter_s.filter(type='KV').all()
         for filter_obj in self.filter_set:
             filter_input = {'filter': filter_obj}
             params = qdata.get(filter_obj.type, {}).get(filter_obj.code, {})
             selected = str(params['selected']).split(',') if params.get('selected') else []
 
             obj_s = zip(json.loads(self.FILTER_PARAMSKV_GROUP_MODEL.objects.
-                                   filter(filter=filter_obj, category_site=self.current_category).value_hash),
+                                   filter(cat_filter=filter_obj, category_site=self.current_category).first().value_hash),
                         json.loads(self.FILTER_PARAMSKV_GROUP_MODEL.objects.
-                                   filter(filter=filter_obj, category_site=self.current_category).value))
+                                   filter(cat_filter=filter_obj, category_site=self.current_category).first().value_s))
             filter_input['item_s'] = [{'pk': k, 'title': v} for k, v in obj_s]
             filter_input['selected'] = selected
             self.filter_s.append(filter_input)
