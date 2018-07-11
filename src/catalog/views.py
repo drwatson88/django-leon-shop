@@ -144,7 +144,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         level = self.current_category.depth
         current_category = self.current_category
         for i in reversed(range(level)):
-            self.filter_set = current_category.filter_s.exclude(type=['KV']).all()
+            self.filter_set = current_category.filter_s.exclude(type='KV').all()
             if self.filter_set:
                 break
             current_category = current_category.get_parent()
@@ -174,7 +174,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
                     self.product_set = self.product_set.\
                         filter(**{'{0}__{0}__pk__in'.format(filter_obj.code): [int(i) for i in selected]})
 
-        self.filter_set = self.current_category.filter_s.filter(type=['KV']).all()
+        self.filter_set = self.current_category.filter_s.filter(type='KV').all()
         for filter_obj in self.filter_set:
             params = qdata.get(filter_obj.type, {}).get(filter_obj.code, {})
             selected = str(params['selected']).split(',') if params.get('selected') else []
@@ -379,6 +379,7 @@ class ShopProductInsideView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin
 
     def get(self, *args, **kwargs):
         self._set_product()
+        # self._set_product_params_kv()
         # self._set_product_params_pack()
         # self._set_product_params_stock()
         # self._set_product_params_other()

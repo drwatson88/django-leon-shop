@@ -135,7 +135,7 @@ class ShopCatalogFilterContextProcessor(BaseContextProcessor, ShopCatalogParamsV
         level = self.current_category.depth
         current_category = self.current_category
         for i in reversed(range(level)):
-            self.filter_set = current_category.filter_s.exclude(type=['KV']).all()
+            self.filter_set = current_category.filter_s.exclude(type='KV').all()
             if self.filter_set:
                 break
             current_category = current_category.get_parent()
