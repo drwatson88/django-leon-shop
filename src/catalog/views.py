@@ -178,7 +178,8 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
         for filter_obj in self.filter_set:
             params = qdata.get(filter_obj.type, {}).get(filter_obj.code, {})
             selected = str(params['selected']).split(',') if params.get('selected') else []
-            self.product_set = self.product_set.filter(**{'params_kv__value_hash__in': selected})
+            if selected:
+                self.product_set = self.product_set.filter(**{'params_kv__value_hash__in': selected})
 
     def _set_order_s(self):
         order_param = self.params_storage['order'] or 'default'
