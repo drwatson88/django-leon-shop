@@ -81,6 +81,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
     BRAND_MAKER_MODEL = None
     PRODUCT_PARAMS_KV_MODEL = None
     ORDER_REFERENCE_MODEL = None
+    ORDER_REFERENCE_DEFAULT = None
     FILTER_MODEL = None
 
     page_size = PAGE_SIZE
@@ -182,7 +183,7 @@ class ShopProductListView(ShopCatalogBaseView, ShopCatalogParamsValidatorMixin):
                 self.product_set = self.product_set.filter(**{'params_kv__value_hash__in': selected})
 
     def _set_order_s(self):
-        order_param = self.params_storage['order'] or 'default'
+        order_param = self.params_storage['order'] or self.ORDER_REFERENCE_DEFAULT
         order_selected = self.ORDER_REFERENCE_MODEL.objects.get(code=order_param)
         order_name = order_selected.field_name \
             if order_selected.field_order else '-{}'.format(order_selected.field_name)
